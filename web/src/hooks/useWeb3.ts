@@ -80,7 +80,13 @@ export function useWeb3() {
 
   const connectWallet = useCallback(async () => {
     if (typeof window === "undefined" || !(window as any).ethereum) {
-      alert("請先安裝 MetaMask 錢包擴充套件，或使用手機端 MetaMask 瀏覽器！");
+      const isMobile = typeof navigator !== "undefined" && /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+      if (isMobile) {
+        const host = window.location.host;
+        window.location.href = `https://metamask.app.link/dapp/${host}`;
+        return;
+      }
+      alert("未偵測到 Web3 錢包！請安裝 MetaMask 擴充套件，或使用手機端 MetaMask 內建瀏覽器開啟。");
       return;
     }
 
@@ -134,7 +140,7 @@ export function useWeb3() {
     (window as any).ethereum.on("accountsChanged", handleAccountsChanged);
     (window as any).ethereum.on("chainChanged", handleChainChanged);
 
-    // Auto-connect if already authorized
+    // Auto-connect if already authorized, or auto-prompt if inside Web3 browser (e.g. MetaMask Mobile)
     const browserProvider = new ethers.BrowserProvider((window as any).ethereum);
     browserProvider.listAccounts().then((accs) => {
       if (accs.length > 0) {
@@ -145,6 +151,11 @@ export function useWeb3() {
         checkNetwork(browserProvider).then((ok) => {
           if (ok) updateBalance(first, browserProvider);
         });
+      } else {
+        const isGuest = localStorage.getItem("idlecoll_guest_addr");
+        if (!isGuest) {
+          connectWallet();
+        }
       }
     }).catch(() => {});
 
