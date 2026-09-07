@@ -108,6 +108,7 @@ export function App() {
           {activeTab === "market" && (
             <Marketplace
               address={address}
+              balance0G={balance0G}
               isCorrectNetwork={isCorrectNetwork}
               switchNetwork={switchNetwork}
               getContracts={getContracts}

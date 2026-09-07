@@ -36,43 +36,38 @@ export function useWeb3() {
 
   const switchNetwork = useCallback(async () => {
     if (typeof window === "undefined" || !(window as any).ethereum) return;
+    const eth = (window as any).ethereum;
+
+    const zeroGConfig = {
+      chainId: ZEROG_CHAIN_ID_HEX,
+      chainName: "0G Galileo Testnet",
+      nativeCurrency: { name: "0G", symbol: "0G", decimals: 18 },
+      rpcUrls: ["https://evmrpc-testnet.0g.ai"],
+      blockExplorerUrls: ["https://chainscan-galileo.0g.ai"],
+    };
+
     try {
-      await (window as any).ethereum.request({
-        method: "wallet_switchEthereumChain",
-        params: [{ chainId: ZEROG_CHAIN_ID_HEX }],
+      // 1. Try wallet_addEthereumChain first to ensure native currency symbol is '0G'
+      await eth.request({
+        method: "wallet_addEthereumChain",
+        params: [zeroGConfig],
       });
       setIsCorrectNetwork(true);
       if (address && provider) {
         updateBalance(address, provider);
       }
-    } catch (switchError: any) {
-      const isNotAdded =
-        switchError.code === 4902 ||
-        switchError?.data?.originalError?.code === 4902 ||
-        (switchError.message && switchError.message.toLowerCase().includes("unrecognized"));
-
-      if (isNotAdded) {
-        try {
-          await (window as any).ethereum.request({
-            method: "wallet_addEthereumChain",
-            params: [
-              {
-                chainId: ZEROG_CHAIN_ID_HEX,
-                chainName: "0G Galileo Testnet",
-                nativeCurrency: { name: "0G", symbol: "0G", decimals: 18 },
-                rpcUrls: ["https://evmrpc-testnet.0g.ai"],
-                blockExplorerUrls: ["https://chainscan-galileo.0g.ai"],
-              },
-            ],
-          });
-          setIsCorrectNetwork(true);
-          if (address && provider) {
-            updateBalance(address, provider);
-          }
-        } catch (addError) {
-          console.error("Failed to add 0G network:", addError);
+    } catch (addError: any) {
+      // 2. Fallback to switchEthereumChain if already exists or wallet rejects add
+      try {
+        await eth.request({
+          method: "wallet_switchEthereumChain",
+          params: [{ chainId: ZEROG_CHAIN_ID_HEX }],
+        });
+        setIsCorrectNetwork(true);
+        if (address && provider) {
+          updateBalance(address, provider);
         }
-      } else {
+      } catch (switchError: any) {
         console.error("Failed to switch to 0G network:", switchError);
       }
     }

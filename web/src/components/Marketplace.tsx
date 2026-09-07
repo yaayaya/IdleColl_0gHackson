@@ -5,8 +5,9 @@ import { useDialog } from "../context/DialogContext.tsx";
 
 interface MarketplaceProps {
   address: string | null;
+  balance0G?: string;
   isCorrectNetwork: boolean;
-  switchNetwork: () => Promise<void>;
+  switchNetwork: () => void;
   getContracts: () => any;
   getReadOnlyContracts: () => any;
   onTradeComplete: () => void;
@@ -14,6 +15,7 @@ interface MarketplaceProps {
 
 export const Marketplace: React.FC<MarketplaceProps> = ({
   address,
+  balance0G = "0.00",
   isCorrectNetwork,
   switchNetwork,
   getContracts,
@@ -99,11 +101,10 @@ export const Marketplace: React.FC<MarketplaceProps> = ({
   }, [fetchListings]);
 
   // Handle on-chain listing
-  const handleCreateListing = async () => {
-    if (!address || !selectedTokenId) return;
-
+  const handleList = async () => {
+    if (!selectedTokenId || !priceInput) return;
     if (!isCorrectNetwork) {
-      showWarning("請先將錢包切換至 0G Galileo 測試網路！所有合約交易與手續費均使用 0G 原生代幣。", "網路未匹配");
+      showWarning("請先切換至 0G Galileo 測試網路！所有合約交易均使用 0G 原生代幣。", "網路未匹配");
       await switchNetwork();
       return;
     }
@@ -115,20 +116,25 @@ export const Marketplace: React.FC<MarketplaceProps> = ({
     }
 
     try {
-      setActionStatus("1/2: 正在向 0G 智能合約授權藏品 (Approve)...");
+      setActionStatus("1/2: 請在 MetaMask 彈窗中授權藏品 (Approve)...");
       const priceWei = ethers.parseEther(priceInput || "0.001");
 
       // 1. Approve
-      const approveTx = await contracts.nft.approve(contracts.contractsData.marketplaceAddress, selectedTokenId);
+      const approveTx = await contracts.nft.approve(contracts.contractsData.marketplaceAddress, selectedTokenId, {
+        gasLimit: 120000,
+      });
+      setActionStatus("1/2: 正在等待 0G Galileo 區塊確認授權...");
       await approveTx.wait();
 
       // 2. List
-      setActionStatus("2/2: 正在發布 0G 拍賣行賣單 (List)...");
+      setActionStatus("2/2: 請在 MetaMask 彈窗中確認發布賣單 (List)...");
       const listTx = await contracts.marketplace.listItem(
         contracts.contractsData.nftAddress,
         selectedTokenId,
-        priceWei
+        priceWei,
+        { gasLimit: 250000 }
       );
+      setActionStatus("2/2: 正在等待 0G 拍賣行寫入上架記錄...");
       await listTx.wait();
 
       if (typeof navigator !== "undefined" && navigator.vibrate) {
@@ -141,8 +147,13 @@ export const Marketplace: React.FC<MarketplaceProps> = ({
       showSuccess("上架成功！已發布至 0G 鏈上拍賣場，買家將以 0G 原生幣向你購買。", "拍賣上架完成");
     } catch (err: any) {
       console.error("Listing error:", err);
-      showError(err.reason || err.message || "上架失敗，請確認 0G 錢包授權！", "上架交易中斷");
       setActionStatus(null);
+      const errMsg = err?.reason || err?.message || "";
+      if (errMsg.includes("rejected") || errMsg.includes("User denied") || err?.code === 4001 || err?.code === "ACTION_REJECTED") {
+        showWarning("您已在錢包中取消上架操作。", "操作已取消");
+      } else {
+        showError(err.reason || err.message || "上架失敗，請確認 0G 錢包授權！", "上架交易中斷");
+      }
     }
   };
 
@@ -153,9 +164,25 @@ export const Marketplace: React.FC<MarketplaceProps> = ({
       return;
     }
 
+    // Guard: Prevent buying own item
+    if (listing.seller.toLowerCase() === address.toLowerCase()) {
+      showWarning("這是您自己上架掛售的藏品，無法向自己購買！\n若要取回藏品請直接點擊「下架」。", "無法購買自己的藏品");
+      return;
+    }
+
+    // Guard: Network must be 0G Galileo
     if (!isCorrectNetwork) {
       showWarning("請先將錢包切換至 0G Galileo 測試網路！拍賣行結算皆使用 0G 原生代幣。", "網路未匹配");
       await switchNetwork();
+      return;
+    }
+
+    // Guard: Check 0G balance
+    if (balance0G && parseFloat(balance0G) < parseFloat(listing.price)) {
+      showError(
+        `0G 原生幣餘額不足！\n\n購買 Token #${listing.tokenId} 需要 ${listing.price} 0G，您當前錢包僅有 ${balance0G} 0G。\n請先領取 0G 測試代幣後再試！`,
+        "0G 餘額不足"
+      );
       return;
     }
 
@@ -166,12 +193,19 @@ export const Marketplace: React.FC<MarketplaceProps> = ({
     }
 
     try {
-      setActionStatus(`正在以 ${listing.price} 0G 購買 Token #${listing.tokenId}...`);
+      setActionStatus(`請在 MetaMask 彈窗中確認支付 ${listing.price} 0G...`);
       const priceWei = ethers.parseEther(listing.price);
 
-      const buyTx = await contracts.marketplace.buyItem(listing.listingId, { value: priceWei });
+      // Explicit gasLimit avoids RPC estimateGas hanging on 0G testnet
+      const buyTx = await contracts.marketplace.buyItem(listing.listingId, {
+        value: priceWei,
+        gasLimit: 300000,
+      });
+
+      setActionStatus(`0G 交易已送出 (${buyTx.hash.slice(0, 10)}...)，等待 0G Galileo 區塊確認中...`);
       const receipt = await buyTx.wait();
 
+      setActionStatus("交易確認成功，正在同步星際圖鑑資料...");
       // Sync backend DB ownership
       await fetch("/api/marketplace/sync-buy", {
         method: "POST",
@@ -193,8 +227,22 @@ export const Marketplace: React.FC<MarketplaceProps> = ({
       showSuccess(`購買成功！已支付 ${listing.price} 0G，Token #${listing.tokenId} 已安全轉入你的錢包與圖鑑！`, "0G 鏈上交易成功");
     } catch (err: any) {
       console.error("Buy error:", err);
-      showError(err.reason || err.message || "購買失敗，請確認 0G 測試幣餘額足夠！", "購買失敗");
       setActionStatus(null);
+      const errMsg = err?.reason || err?.message || "";
+      if (
+        errMsg.includes("rejected") ||
+        errMsg.includes("User denied") ||
+        err?.code === 4001 ||
+        err?.code === "ACTION_REJECTED"
+      ) {
+        showWarning("您已在錢包中取消此次購買交易。", "交易已取消");
+      } else if (errMsg.includes("insufficient funds")) {
+        showError(`0G 原生幣餘額不足以支付購買金額 (${listing.price} 0G) 或 Gas 燃料費！`, "0G 餘額不足");
+      } else if (errMsg.includes("Seller cannot buy")) {
+        showWarning("無法向自己購買上架中的藏品！", "操作無效");
+      } else {
+        showError(err.reason || err.message || "購買失敗，請確認 0G 測試幣餘額足夠！", "購買失敗");
+      }
     }
   };
 
@@ -215,16 +263,24 @@ export const Marketplace: React.FC<MarketplaceProps> = ({
       cancelText: "保留賣單",
       onConfirm: async () => {
         try {
-          setActionStatus("正在向 0G 鏈取消賣單...");
-          const tx = await contracts.marketplace.cancelListing(listingId);
+          setActionStatus("請在 MetaMask 彈窗中確認下架操作...");
+          const tx = await contracts.marketplace.cancelListing(listingId, {
+            gasLimit: 150000,
+          });
+          setActionStatus("正在等待 0G 鏈上下架確認...");
           await tx.wait();
           setActionStatus(null);
           await fetchListings();
           showSuccess("藏品已成功從 0G 拍賣行撤回！", "下架完成");
         } catch (err: any) {
           console.error("Cancel error:", err);
-          showError(err.reason || err.message || "下架失敗，請確認 0G 錢包簽署！", "下架失敗");
           setActionStatus(null);
+          const errMsg = err?.reason || err?.message || "";
+          if (errMsg.includes("rejected") || errMsg.includes("User denied") || err?.code === 4001 || err?.code === "ACTION_REJECTED") {
+            showWarning("您已取消下架操作。", "操作已取消");
+          } else {
+            showError(err.reason || err.message || "下架失敗，請確認 0G 錢包簽署！", "下架失敗");
+          }
         }
       },
     });
@@ -279,10 +335,31 @@ export const Marketplace: React.FC<MarketplaceProps> = ({
         </button>
       </div>
 
+      {/* 0G Settlement & Network Update Notice */}
+      <div className="px-3 py-2 rounded-xl bg-space-900/60 border border-space-800 text-[11px] font-mono text-gray-400 flex items-center justify-between gap-2">
+        <span className="text-cyan-400 truncate">◆ 拍賣行結算：0G 原生幣 (Galileo 測試鏈)</span>
+        <button
+          onClick={switchNetwork}
+          className="text-[10px] text-cyan-300 hover:text-cyan-200 underline whitespace-nowrap active:scale-95 transition-all"
+          title="若 MetaMask 貨幣符號非 0G，點此可更新網路配置"
+        >
+          切換/更新 0G 網路
+        </button>
+      </div>
+
       {/* Action Status Pill */}
       {actionStatus && (
-        <div className="p-3 rounded-xl bg-purple-950/80 border border-purple-500 text-purple-200 text-xs font-mono text-center animate-pulse">
-          ⏳ {actionStatus}
+        <div className="p-3 rounded-xl bg-purple-950/90 border border-purple-500 text-purple-200 text-xs font-mono flex items-center justify-between gap-2 shadow-[0_0_15px_rgba(168,85,247,0.3)] animate-pulse">
+          <div className="flex items-center gap-2">
+            <span className="text-sm">⏳</span>
+            <span>{actionStatus}</span>
+          </div>
+          <button
+            onClick={() => setActionStatus(null)}
+            className="text-[10px] px-2 py-0.5 rounded bg-space-800 hover:bg-space-700 text-gray-300 border border-space-600 active:scale-95 whitespace-nowrap"
+          >
+            關閉
+          </button>
         </div>
       )}
 
@@ -422,7 +499,7 @@ export const Marketplace: React.FC<MarketplaceProps> = ({
                   </button>
                 ) : (
                   <button
-                    onClick={handleCreateListing}
+                    onClick={handleList}
                     disabled={!selectedTokenId || !priceInput}
                     className="w-full py-3 rounded-xl bg-gradient-to-r from-neon-cyan to-blue-500 hover:from-cyan-400 hover:to-blue-400 text-black font-mono font-bold text-xs shadow-[0_0_16px_rgba(0,240,255,0.4)] active:scale-95 disabled:opacity-50"
                   >
