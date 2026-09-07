@@ -90,6 +90,7 @@ export function useWeb3() {
     }
 
     try {
+      localStorage.removeItem("idlecoll_disconnected");
       setIsConnecting(true);
       const browserProvider = new ethers.BrowserProvider((window as any).ethereum);
       const accounts = await browserProvider.send("eth_requestAccounts", []);
@@ -145,6 +146,7 @@ export function useWeb3() {
       const handleAccountsChanged = (accounts: string[]) => {
         if (!isMounted) return;
         if (accounts.length > 0) {
+          localStorage.removeItem("idlecoll_disconnected");
           const newAddr = accounts[0].toLowerCase();
           setAddress(newAddr);
           const bp = new ethers.BrowserProvider(eth);
@@ -154,6 +156,7 @@ export function useWeb3() {
         } else {
           setAddress(null);
           setSigner(null);
+          setBalance0G("0.00");
         }
       };
 
@@ -165,6 +168,11 @@ export function useWeb3() {
       eth.on("chainChanged", handleChainChanged);
 
       try {
+        const isManuallyDisconnected = localStorage.getItem("idlecoll_disconnected") === "true";
+        if (isManuallyDisconnected) {
+          return;
+        }
+
         const browserProvider = new ethers.BrowserProvider(eth);
         const accs = await browserProvider.listAccounts();
         if (accs.length > 0 && isMounted) {
@@ -176,9 +184,8 @@ export function useWeb3() {
           const ok = await checkNetwork(browserProvider);
           if (ok && isMounted) updateBalance(first, browserProvider);
         } else if (isMounted) {
-          // If in MetaMask mobile browser and not logged in as guest, auto-request accounts
-          const isGuest = localStorage.getItem("idlecoll_guest_addr");
-          if (!isGuest && eth.isMetaMask) {
+          // If in MetaMask browser, auto-request accounts
+          if (eth.isMetaMask) {
             connectWallet();
           }
         }
@@ -220,21 +227,12 @@ export function useWeb3() {
     return { nft, marketplace, contractsData };
   }, [signer, isCorrectNetwork]);
 
-  const loginAsGuest = useCallback(() => {
-    let guest = localStorage.getItem("idlecoll_guest_addr");
-    if (!guest) {
-      guest = "0x" + Array.from({ length: 40 }, () => Math.floor(Math.random() * 16).toString(16)).join("");
-      localStorage.setItem("idlecoll_guest_addr", guest);
-    }
-    setAddress(guest.toLowerCase());
-    setIsCorrectNetwork(true);
-    setBalance0G("10.00 (Demo)");
-  }, []);
-
   const disconnectWallet = useCallback(() => {
+    localStorage.setItem("idlecoll_disconnected", "true");
+    localStorage.removeItem("idlecoll_guest_addr");
     setAddress(null);
     setSigner(null);
-    localStorage.removeItem("idlecoll_guest_addr");
+    setBalance0G("0.00");
   }, []);
 
   return {
@@ -244,9 +242,7 @@ export function useWeb3() {
     provider,
     signer,
     isConnecting,
-    isGuest: !signer && !!address,
     connectWallet,
-    loginAsGuest,
     disconnectWallet,
     switchNetwork,
     getContracts,

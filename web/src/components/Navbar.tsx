@@ -1,16 +1,16 @@
 import React, { useState } from "react";
-import { Wallet, Coins, Ticket, Zap, AlertTriangle, CheckCircle2 } from "lucide-react";
+import { Wallet, Coins, Ticket, Zap, AlertTriangle, CheckCircle2, LogOut, Copy, Check } from "lucide-react";
 import { ConnectWalletModal } from "./ConnectWalletModal.tsx";
+import { useDialog } from "../context/DialogContext.tsx";
 
 interface NavbarProps {
   address: string | null;
   balance0G: string;
   isCorrectNetwork: boolean;
-  isGuest?: boolean;
   coins: number;
   tickets: number;
   connectWallet: () => void;
-  loginAsGuest: () => void;
+  disconnectWallet: () => void;
   switchNetwork: () => void;
 }
 
@@ -18,14 +18,15 @@ export const Navbar: React.FC<NavbarProps> = ({
   address,
   balance0G,
   isCorrectNetwork,
-  isGuest,
   coins,
   tickets,
   connectWallet,
-  loginAsGuest,
+  disconnectWallet,
   switchNetwork,
 }) => {
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
+  const [copied, setCopied] = useState<boolean>(false);
+  const { showConfirm } = useDialog();
 
   const handleConnectClick = () => {
     if (typeof window !== "undefined" && (window as any).ethereum) {
@@ -34,6 +35,29 @@ export const Navbar: React.FC<NavbarProps> = ({
       setIsModalOpen(true);
     }
   };
+
+  const handleCopyAddress = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!address) return;
+    if (typeof navigator !== "undefined" && navigator.clipboard) {
+      navigator.clipboard.writeText(address);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1500);
+    }
+  };
+
+  const handleDisconnectClick = () => {
+    showConfirm({
+      title: "登出錢包連線",
+      message: `即將登出當前錢包連線 (${address?.slice(0, 6)}...${address?.slice(-4)})。登出後將切換為未連線狀態，需再次連線方可進行鏈上交易與領取收益。`,
+      confirmText: "確認登出",
+      cancelText: "保留連線",
+      onConfirm: () => {
+        disconnectWallet();
+      },
+    });
+  };
+
   return (
     <header className="sticky top-0 z-30 bg-space-950/90 backdrop-blur-md border-b border-space-800 px-4 py-2.5">
       {/* Top row: Brand & Wallet */}
@@ -50,7 +74,7 @@ export const Navbar: React.FC<NavbarProps> = ({
 
         <div className="flex items-center gap-1.5">
           {/* Network Switcher Pill */}
-          {address && !isGuest && (
+          {address && (
             isCorrectNetwork ? (
               <div className="hidden xs:flex items-center gap-1 px-2 py-1 rounded-full bg-emerald-950/60 border border-emerald-500/40 text-emerald-400 text-[10px] font-mono">
                 <CheckCircle2 className="w-3 h-3 text-emerald-400" />
@@ -67,31 +91,42 @@ export const Navbar: React.FC<NavbarProps> = ({
             )
           )}
 
-          {/* Connect / Address Pill */}
+          {/* Connect / Address Pill & Logout */}
           {address ? (
-            <div className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-space-900 border border-space-700 text-xs font-mono">
-              <div className={`w-2 h-2 rounded-full ${isGuest ? "bg-amber-400 shadow-[0_0_6px_#f59e0b]" : "bg-neon-cyan shadow-[0_0_6px_#00f0ff]"}`} />
-              <span className="text-gray-200">
-                {isGuest ? `Guest_${address.slice(2, 6)}` : `Captain_${address.slice(2, 6)}`}
-              </span>
-            </div>
-          ) : (
             <div className="flex items-center gap-1.5">
               <button
-                onClick={loginAsGuest}
-                className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-space-800 hover:bg-space-700 border border-space-600 text-cyan-300 font-semibold text-xs transition-all active:scale-95"
-                title="免裝錢包直接體驗"
+                onClick={handleCopyAddress}
+                className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-space-900 hover:bg-space-850 border border-space-700 hover:border-cyan-500/40 text-xs font-mono transition-all active:scale-95 group"
+                title="點擊複製錢包完整地址"
               >
-                <span>訪客體驗</span>
+                <div className="w-2 h-2 rounded-full bg-neon-cyan shadow-[0_0_6px_#00f0ff]" />
+                <span className="text-gray-200 group-hover:text-cyan-300 transition-colors">
+                  Captain_{address.slice(2, 6)}
+                </span>
+                {copied ? (
+                  <Check className="w-3 h-3 text-emerald-400" />
+                ) : (
+                  <Copy className="w-3 h-3 text-gray-500 group-hover:text-gray-300 opacity-60 group-hover:opacity-100 transition-opacity" />
+                )}
               </button>
+
               <button
-                onClick={handleConnectClick}
-                className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-black font-semibold text-xs transition-all shadow-[0_0_12px_rgba(0,240,255,0.3)] active:scale-95"
+                onClick={handleDisconnectClick}
+                className="flex items-center gap-1 px-2 py-1.5 rounded-lg bg-space-900 hover:bg-rose-950/70 border border-space-700 hover:border-rose-500/50 text-gray-400 hover:text-rose-300 text-xs font-mono transition-all active:scale-95 group"
+                title="登出錢包連線"
               >
-                <Wallet className="w-3.5 h-3.5" />
-                <span>連線錢包</span>
+                <LogOut className="w-3.5 h-3.5 text-gray-400 group-hover:text-rose-400 group-hover:translate-x-0.5 transition-all" />
+                <span className="text-[11px] font-semibold text-gray-400 group-hover:text-rose-300">登出</span>
               </button>
             </div>
+          ) : (
+            <button
+              onClick={handleConnectClick}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-black font-semibold text-xs transition-all shadow-[0_0_12px_rgba(0,240,255,0.3)] active:scale-95"
+            >
+              <Wallet className="w-3.5 h-3.5" />
+              <span>連線錢包</span>
+            </button>
           )}
         </div>
       </div>
@@ -128,7 +163,6 @@ export const Navbar: React.FC<NavbarProps> = ({
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         onConnectMetaMask={connectWallet}
-        onLoginAsGuest={loginAsGuest}
       />
     </header>
   );

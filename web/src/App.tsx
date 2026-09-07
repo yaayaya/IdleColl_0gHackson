@@ -14,9 +14,8 @@ export function App() {
     address,
     balance0G,
     isCorrectNetwork,
-    isGuest,
     connectWallet,
-    loginAsGuest,
+    disconnectWallet,
     switchNetwork,
     getContracts,
     getReadOnlyContracts,
@@ -31,7 +30,12 @@ export function App() {
 
   // Sync profile when wallet address changes
   const fetchProfile = useCallback(async () => {
-    if (!address) return;
+    if (!address) {
+      setCoins(0);
+      setTickets(0);
+      setInitialPending(0);
+      return;
+    }
     try {
       const res = await fetch(`/api/player/profile?address=${address}`);
       const data = await res.json();
@@ -66,11 +70,10 @@ export function App() {
           address={address}
           balance0G={balance0G}
           isCorrectNetwork={isCorrectNetwork}
-          isGuest={isGuest}
           coins={coins}
           tickets={tickets}
           connectWallet={connectWallet}
-          loginAsGuest={loginAsGuest}
+          disconnectWallet={disconnectWallet}
           switchNetwork={switchNetwork}
         />
 

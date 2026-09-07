@@ -5,14 +5,12 @@ interface ConnectWalletModalProps {
   isOpen: boolean;
   onClose: () => void;
   onConnectMetaMask: () => void;
-  onLoginAsGuest: () => void;
 }
 
 export const ConnectWalletModal: React.FC<ConnectWalletModalProps> = ({
   isOpen,
   onClose,
   onConnectMetaMask,
-  onLoginAsGuest,
 }) => {
   const [isMobile, setIsMobile] = useState<boolean>(false);
   const [hasInjectedProvider, setHasInjectedProvider] = useState<boolean>(false);
@@ -149,22 +147,6 @@ export const ConnectWalletModal: React.FC<ConnectWalletModalProps> = ({
               </a>
             </div>
           )}
-
-          {/* Universal Guest Mode Alternative */}
-          <div className="pt-2 border-t border-space-800">
-            <button
-              onClick={() => {
-                onLoginAsGuest();
-                onClose();
-              }}
-              className="w-full py-2.5 rounded-xl bg-space-850 hover:bg-space-800 border border-space-700 text-cyan-300 font-mono text-xs font-semibold flex items-center justify-center gap-2 transition-all active:scale-95"
-            >
-              <span>🎮 訪客體驗 (免裝錢包直接玩)</span>
-            </button>
-            <p className="text-[9px] text-gray-500 font-mono text-center mt-1">
-              訪客模式即刻發放 10.00 0G 體驗金，可完整體驗放置採礦與 12 格圖鑑抽卡。
-            </p>
-          </div>
         </div>
       </div>
     </div>
