@@ -1,5 +1,6 @@
-import React from "react";
+import React, { useState } from "react";
 import { Wallet, Coins, Ticket, Zap, AlertTriangle, CheckCircle2 } from "lucide-react";
+import { ConnectWalletModal } from "./ConnectWalletModal.tsx";
 
 interface NavbarProps {
   address: string | null;
@@ -24,6 +25,15 @@ export const Navbar: React.FC<NavbarProps> = ({
   loginAsGuest,
   switchNetwork,
 }) => {
+  const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
+
+  const handleConnectClick = () => {
+    if (typeof window !== "undefined" && (window as any).ethereum) {
+      connectWallet();
+    } else {
+      setIsModalOpen(true);
+    }
+  };
   return (
     <header className="sticky top-0 z-30 bg-space-950/90 backdrop-blur-md border-b border-space-800 px-4 py-2.5">
       {/* Top row: Brand & Wallet */}
@@ -75,7 +85,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                 <span>訪客體驗</span>
               </button>
               <button
-                onClick={connectWallet}
+                onClick={handleConnectClick}
                 className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-black font-semibold text-xs transition-all shadow-[0_0_12px_rgba(0,240,255,0.3)] active:scale-95"
               >
                 <Wallet className="w-3.5 h-3.5" />
@@ -112,6 +122,14 @@ export const Navbar: React.FC<NavbarProps> = ({
           </div>
         </div>
       </div>
+
+      {/* Cross-Platform Connect Modal */}
+      <ConnectWalletModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        onConnectMetaMask={connectWallet}
+        onLoginAsGuest={loginAsGuest}
+      />
     </header>
   );
 };

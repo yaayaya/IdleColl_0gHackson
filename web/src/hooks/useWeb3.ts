@@ -86,7 +86,6 @@ export function useWeb3() {
         window.location.href = `https://metamask.app.link/dapp/${host}`;
         return;
       }
-      alert("未偵測到 Web3 錢包！請安裝 MetaMask 擴充套件，或使用手機端 MetaMask 內建瀏覽器開啟。");
       return;
     }
 
@@ -115,57 +114,90 @@ export function useWeb3() {
     }
   }, [checkNetwork, updateBalance, switchNetwork]);
 
-  // Event listeners for account and network changes
+  // Event listeners for account and network changes with mobile async injection support
   useEffect(() => {
-    if (typeof window === "undefined" || !(window as any).ethereum) return;
+    if (typeof window === "undefined") return;
 
-    const handleAccountsChanged = (accounts: string[]) => {
-      if (accounts.length > 0) {
-        const newAddr = accounts[0].toLowerCase();
-        setAddress(newAddr);
-        if (provider) {
-          provider.getSigner().then(setSigner);
-          updateBalance(newAddr, provider);
-        }
-      } else {
-        setAddress(null);
-        setSigner(null);
-      }
-    };
+    let isMounted = true;
 
-    const handleChainChanged = () => {
-      window.location.reload();
-    };
+    const setupEthereum = async () => {
+      let eth = (window as any).ethereum;
 
-    (window as any).ethereum.on("accountsChanged", handleAccountsChanged);
-    (window as any).ethereum.on("chainChanged", handleChainChanged);
-
-    // Auto-connect if already authorized, or auto-prompt if inside Web3 browser (e.g. MetaMask Mobile)
-    const browserProvider = new ethers.BrowserProvider((window as any).ethereum);
-    browserProvider.listAccounts().then((accs) => {
-      if (accs.length > 0) {
-        const first = accs[0].address.toLowerCase();
-        setAddress(first);
-        setProvider(browserProvider);
-        browserProvider.getSigner().then(setSigner);
-        checkNetwork(browserProvider).then((ok) => {
-          if (ok) updateBalance(first, browserProvider);
+      // In mobile MetaMask browser, ethereum is often injected asynchronously
+      if (!eth) {
+        await new Promise<void>((resolve) => {
+          const timer = setTimeout(resolve, 1500);
+          window.addEventListener(
+            "ethereum#initialized",
+            () => {
+              clearTimeout(timer);
+              eth = (window as any).ethereum;
+              resolve();
+            },
+            { once: true }
+          );
         });
-      } else {
-        const isGuest = localStorage.getItem("idlecoll_guest_addr");
-        if (!isGuest) {
-          connectWallet();
-        }
+        eth = (window as any).ethereum;
       }
-    }).catch(() => {});
+
+      if (!eth || !isMounted) return;
+
+      const handleAccountsChanged = (accounts: string[]) => {
+        if (!isMounted) return;
+        if (accounts.length > 0) {
+          const newAddr = accounts[0].toLowerCase();
+          setAddress(newAddr);
+          const bp = new ethers.BrowserProvider(eth);
+          setProvider(bp);
+          bp.getSigner().then(setSigner);
+          updateBalance(newAddr, bp);
+        } else {
+          setAddress(null);
+          setSigner(null);
+        }
+      };
+
+      const handleChainChanged = () => {
+        window.location.reload();
+      };
+
+      eth.on("accountsChanged", handleAccountsChanged);
+      eth.on("chainChanged", handleChainChanged);
+
+      try {
+        const browserProvider = new ethers.BrowserProvider(eth);
+        const accs = await browserProvider.listAccounts();
+        if (accs.length > 0 && isMounted) {
+          const first = accs[0].address.toLowerCase();
+          setAddress(first);
+          setProvider(browserProvider);
+          const s = await browserProvider.getSigner();
+          if (isMounted) setSigner(s);
+          const ok = await checkNetwork(browserProvider);
+          if (ok && isMounted) updateBalance(first, browserProvider);
+        } else if (isMounted) {
+          // If in MetaMask mobile browser and not logged in as guest, auto-request accounts
+          const isGuest = localStorage.getItem("idlecoll_guest_addr");
+          if (!isGuest && eth.isMetaMask) {
+            connectWallet();
+          }
+        }
+      } catch (err) {
+        console.warn("Wallet init check:", err);
+      }
+    };
+
+    setupEthereum();
 
     return () => {
-      if ((window as any).ethereum.removeListener) {
-        (window as any).ethereum.removeListener("accountsChanged", handleAccountsChanged);
-        (window as any).ethereum.removeListener("chainChanged", handleChainChanged);
+      isMounted = false;
+      const eth = (window as any).ethereum;
+      if (eth && eth.removeListener) {
+        eth.removeListener("accountsChanged", () => {});
+        eth.removeListener("chainChanged", () => {});
       }
     };
-  }, [checkNetwork, updateBalance]);
+  }, [checkNetwork, updateBalance, connectWallet]);
 
   // Read-only provider connected directly to 0G Galileo Testnet
   const getReadOnlyContracts = useCallback(() => {
