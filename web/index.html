@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="zh-TW" class="dark">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/logo.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+    <meta name="theme-color" content="#0B0E17" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="IdleColl" />
+    <link rel="manifest" href="/manifest.webmanifest" />
+    <title>IdleColl — 0G Deep Space Collector</title>
+    <style>
+      /* Safe area insets for iOS notches and home indicators */
+      body {
+        margin: 0;
+        background-color: #07090e;
+        color: #f3f4f6;
+        user-select: none;
+        -webkit-user-select: none;
+        touch-action: manipulation;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      }
+      /* Custom scrollbar */
+      ::-webkit-scrollbar {
+        width: 4px;
+        height: 4px;
+      }
+      ::-webkit-scrollbar-track {
+        background: #0b0e17;
+      }
+      ::-webkit-scrollbar-thumb {
+        background: #222c4a;
+        border-radius: 2px;
+      }
+    </style>
+  </head>
+  <body class="overflow-x-hidden min-h-screen">
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

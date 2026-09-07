@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" fill="none">
+  <circle cx="50" cy="50" r="45" fill="#0B0E17" stroke="#00f0ff" stroke-width="2"/>
+  <ellipse cx="50" cy="50" rx="38" ry="14" stroke="#9d4edd" stroke-width="2" transform="rotate(-25 50 50)"/>
+  <polygon points="50,22 68,42 50,78 32,42" fill="url(#coreGrad)"/>
+  <circle cx="50" cy="42" r="6" fill="#00f0ff"/>
+  <defs>
+    <linearGradient id="coreGrad" x1="50" y1="22" x2="50" y2="78" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#00f0ff"/>
+      <stop offset="0.5" stop-color="#9d4edd"/>
+      <stop offset="1" stop-color="#07090e"/>
+    </linearGradient>
+  </defs>
+</svg>

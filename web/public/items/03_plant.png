@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" fill="none">
+    <defs>
+      <radialGradient id="plGlow" cx="50%" cy="50%" r="50%">
+        <stop offset="0%" stop-color="#10b981" stop-opacity="0.35"/>
+        <stop offset="100%" stop-color="#0b0e17" stop-opacity="0"/>
+      </radialGradient>
+    </defs>
+    <rect width="200" height="200" rx="28" fill="#070a12"/>
+    <rect x="3" y="3" width="194" height="194" rx="25" stroke="#10b981" stroke-width="1.5" stroke-opacity="0.4"/>
+    <circle cx="100" cy="95" r="75" fill="url(#plGlow)"/>
+    <!-- Geodesic Dome Terrarium -->
+    <circle cx="100" cy="92" r="50" fill="#064e3b" fill-opacity="0.4" stroke="#34d399" stroke-width="2"/>
+    <!-- Martian Red Soil -->
+    <path d="M54 105 Q100 120 146 105 A50 50 0 0 1 54 105 Z" fill="#b45309" stroke="#f59e0b" stroke-width="1.5"/>
+    <!-- Bio-Succulent Plant -->
+    <path d="M100 110 C85 95 85 75 100 62 C115 75 115 95 100 110 Z" fill="#10b981" stroke="#34d399" stroke-width="1.5"/>
+    <path d="M85 105 C75 95 72 82 85 72 C92 84 94 96 85 105 Z" fill="#059669" stroke="#6ee7b7" stroke-width="1.2"/>
+    <path d="M115 105 C125 95 128 82 115 72 C108 84 106 96 115 105 Z" fill="#059669" stroke="#6ee7b7" stroke-width="1.2"/>
+    <!-- Bioluminescent Glow Orbs -->
+    <circle cx="100" cy="72" r="3.5" fill="#a7f3d0" filter="drop-shadow(0 0 6px #10b981)"/>
+    <circle cx="85" cy="82" r="2.5" fill="#a7f3d0"/>
+    <circle cx="115" cy="82" r="2.5" fill="#a7f3d0"/>
+    <!-- Base Pedestal -->
+    <rect x="75" y="138" width="50" height="10" rx="3" fill="#1e293b" stroke="#34d399" stroke-width="1.2"/>
+    <!-- Label Banner -->
+    <rect x="25" y="156" width="150" height="24" rx="6" fill="#064e3b" stroke="#10b981" stroke-width="1.2"/>
+    <text x="100" y="172" font-size="11" font-family="monospace" font-weight="900" fill="#34d399" text-anchor="middle" letter-spacing="1">#03 火星耐旱盆栽</text>
+  </svg>

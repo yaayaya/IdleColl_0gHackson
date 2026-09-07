@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" fill="none">
+    <defs>
+      <radialGradient id="iceGlow" cx="50%" cy="50%" r="50%">
+        <stop offset="0%" stop-color="#38bdf8" stop-opacity="0.45"/>
+        <stop offset="100%" stop-color="#0b0e17" stop-opacity="0"/>
+      </radialGradient>
+    </defs>
+    <rect width="200" height="200" rx="28" fill="#070a12"/>
+    <rect x="3" y="3" width="194" height="194" rx="25" stroke="#ec4899" stroke-width="1.5" stroke-opacity="0.4"/>
+    <circle cx="100" cy="95" r="75" fill="url(#iceGlow)"/>
+    <!-- Europa Crystal Facets -->
+    <polygon points="100,30 140,75 100,140 60,75" fill="#0284c7" fill-opacity="0.7" stroke="#38bdf8" stroke-width="2"/>
+    <polygon points="100,30 100,140 60,75" fill="#0369a1" fill-opacity="0.8" stroke="#7dd3fc" stroke-width="1.5"/>
+    <polygon points="100,30 140,75 100,140" fill="#38bdf8" fill-opacity="0.5" stroke="#bae6fd" stroke-width="1.5"/>
+    <!-- Inner Core Prehistoric Microbe Drop -->
+    <circle cx="100" cy="85" r="10" fill="#f43f5e" filter="drop-shadow(0 0 10px #f43f5e)"/>
+    <circle cx="100" cy="85" r="4" fill="#fff"/>
+    <!-- Floating Shards -->
+    <polygon points="50,45 60,55 52,65 44,55" fill="#7dd3fc" stroke="#bae6fd" stroke-width="1"/>
+    <polygon points="150,110 160,120 152,130 144,120" fill="#7dd3fc" stroke="#bae6fd" stroke-width="1"/>
+    <!-- Label Banner -->
+    <rect x="25" y="156" width="150" height="24" rx="6" fill="#831843" stroke="#ec4899" stroke-width="1.2"/>
+    <text x="100" y="172" font-size="11" font-family="monospace" font-weight="900" fill="#f472b6" text-anchor="middle" letter-spacing="1">#06 低溫冰晶</text>
+  </svg>

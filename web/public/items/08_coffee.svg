@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" fill="none">
+    <defs>
+      <radialGradient id="cfGlow" cx="50%" cy="50%" r="50%">
+        <stop offset="0%" stop-color="#a855f7" stop-opacity="0.35"/>
+        <stop offset="100%" stop-color="#0b0e17" stop-opacity="0"/>
+      </radialGradient>
+    </defs>
+    <rect width="200" height="200" rx="28" fill="#070a12"/>
+    <rect x="3" y="3" width="194" height="194" rx="25" stroke="#ec4899" stroke-width="1.5" stroke-opacity="0.4"/>
+    <circle cx="100" cy="95" r="75" fill="url(#cfGlow)"/>
+    <!-- Coffee Cup Body -->
+    <path d="M65 72 L75 130 Q100 138 125 130 L135 72 Z" fill="#1e293b" stroke="#a855f7" stroke-width="2"/>
+    <ellipse cx="100" cy="72" rx="35" ry="10" fill="#0f172a" stroke="#c084fc" stroke-width="1.5"/>
+    <!-- Cup Handle -->
+    <path d="M132 82 C152 82 152 118 127 122" stroke="#a855f7" stroke-width="3" fill="none" stroke-linecap="round"/>
+    <!-- Levitating Black Hole Coffee Sphere -->
+    <circle cx="100" cy="50" r="14" fill="#451a03" stroke="#f59e0b" stroke-width="2" filter="drop-shadow(0 0 8px #f59e0b)"/>
+    <ellipse cx="100" cy="50" rx="20" ry="5" stroke="#00f0ff" stroke-width="1.5" stroke-dasharray="3 3"/>
+    <!-- Anti-gravity Emitter Rings -->
+    <ellipse cx="100" cy="72" rx="22" ry="5" fill="#78350f" stroke="#ec4899" stroke-width="1.5"/>
+    <!-- Label Banner -->
+    <rect x="25" y="156" width="150" height="24" rx="6" fill="#581c87" stroke="#a855f7" stroke-width="1.2"/>
+    <text x="100" y="172" font-size="11" font-family="monospace" font-weight="900" fill="#d8b4fe" text-anchor="middle" letter-spacing="1">#08 黑洞咖啡杯</text>
+  </svg>

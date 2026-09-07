@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" fill="none">
+    <defs>
+      <radialGradient id="slGlow" cx="50%" cy="50%" r="50%">
+        <stop offset="0%" stop-color="#22c55e" stop-opacity="0.35"/>
+        <stop offset="100%" stop-color="#0b0e17" stop-opacity="0"/>
+      </radialGradient>
+    </defs>
+    <rect width="200" height="200" rx="28" fill="#070a12"/>
+    <rect x="3" y="3" width="194" height="194" rx="25" stroke="#22c55e" stroke-width="1.5" stroke-opacity="0.4"/>
+    <circle cx="100" cy="95" r="75" fill="url(#slGlow)"/>
+    <!-- Alien 3-Claw Slipper Sole -->
+    <path d="M60 120 C50 70 85 45 100 45 C115 45 150 70 140 120 C135 135 65 135 60 120 Z" fill="#14532d" stroke="#22c55e" stroke-width="2"/>
+    <!-- Strap Band -->
+    <path d="M65 85 Q100 68 135 85" stroke="#4ade80" stroke-width="10" stroke-linecap="round"/>
+    <!-- 3 Glowing Toes / Grippers -->
+    <circle cx="85" cy="52" r="6" fill="#86efac" filter="drop-shadow(0 0 6px #22c55e)"/>
+    <circle cx="100" cy="46" r="7" fill="#86efac" filter="drop-shadow(0 0 6px #22c55e)"/>
+    <circle cx="115" cy="52" r="6" fill="#86efac" filter="drop-shadow(0 0 6px #22c55e)"/>
+    <!-- Anti-gravity Magnetic Hover Line -->
+    <line x1="60" y1="138" x2="140" y2="138" stroke="#00f0ff" stroke-width="2" stroke-dasharray="4 4"/>
+    <!-- Label Banner -->
+    <rect x="25" y="156" width="150" height="24" rx="6" fill="#14532d" stroke="#22c55e" stroke-width="1.2"/>
+    <text x="100" y="172" font-size="11" font-family="monospace" font-weight="900" fill="#86efac" text-anchor="middle" letter-spacing="1">#09 外星人拖鞋</text>
+  </svg>

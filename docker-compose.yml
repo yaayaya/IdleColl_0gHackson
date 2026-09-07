@@ -1,0 +1,69 @@
+services:
+  postgres:
+    image: postgres:16-bookworm
+    container_name: idlecoll-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: idlecoll
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: idlecoll_secret
+    ports:
+      - "5432:5432"
+    volumes:
+      - idlecoll_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d idlecoll"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  server:
+    build:
+      context: ./server
+      dockerfile: Dockerfile
+    container_name: idlecoll-server
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      PORT: 3001
+      DATABASE_URL: postgres://postgres:idlecoll_secret@postgres:5432/idlecoll
+      ZEROG_RPC_URL: ${ZEROG_RPC_URL:-https://evmrpc-testnet.0g.ai}
+      ZEROG_CHAIN_ID: ${ZEROG_CHAIN_ID:-16602}
+      ZEROG_EXPLORER_URL: ${ZEROG_EXPLORER_URL:-https://chainscan-galileo.0g.ai}
+      MINTER_PRIVATE_KEY: ${MINTER_PRIVATE_KEY}
+      NFT_CONTRACT_ADDRESS: ${NFT_CONTRACT_ADDRESS}
+      MARKETPLACE_CONTRACT_ADDRESS: ${MARKETPLACE_CONTRACT_ADDRESS}
+      ZEROG_AI_ENDPOINT: ${ZEROG_AI_ENDPOINT:-https://compute-network-6.integratenetwork.work/v1/proxy}
+      ZEROG_AI_MODEL: ${ZEROG_AI_MODEL:-qwen/qwen2.5-omni-7b}
+      ZEROG_AI_API_KEY: ${ZEROG_AI_API_KEY}
+      ZEROG_STORAGE_INDEXER: ${ZEROG_STORAGE_INDEXER:-https://indexer-storage-testnet-standard.0g.ai}
+    ports:
+      - "3001:3001"
+
+  web:
+    build:
+      context: ./web
+      dockerfile: Dockerfile
+    container_name: idlecoll-web
+    restart: unless-stopped
+    depends_on:
+      - server
+    ports:
+      - "5173:80"
+
+  tunnel:
+    image: cloudflare/cloudflared:latest
+    container_name: idlecoll-tunnel
+    restart: unless-stopped
+    command: tunnel --config /etc/cloudflared/idlecoll-docker.yml run
+    volumes:
+      - ~/.cloudflared:/etc/cloudflared:ro
+    depends_on:
+      - web
+
+volumes:
+  idlecoll_pgdata:
+    name: idlecoll_pgdata
+

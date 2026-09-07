@@ -1,0 +1,12 @@
+{
+  "name": "idlecoll-monorepo",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev:db": "docker compose up -d postgres",
+    "deploy:contracts": "cd contracts && npm run deploy:zerog",
+    "dev:server": "cd server && npm run dev",
+    "dev:web": "cd web && npm run dev",
+    "build": "cd contracts && npm run build && cd ../server && npm run build && cd ../web && npm run build"
+  }
+}

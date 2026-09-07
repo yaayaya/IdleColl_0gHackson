@@ -1,0 +1,34 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" fill="none">
+    <defs>
+      <radialGradient id="toGlow" cx="50%" cy="50%" r="50%">
+        <stop offset="0%" stop-color="#00f0ff" stop-opacity="0.35"/>
+        <stop offset="100%" stop-color="#0b0e17" stop-opacity="0"/>
+      </radialGradient>
+      <linearGradient id="tiGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%" stop-color="#94a3b8"/>
+        <stop offset="50%" stop-color="#475569"/>
+        <stop offset="100%" stop-color="#0f172a"/>
+      </linearGradient>
+    </defs>
+    <rect width="200" height="200" rx="28" fill="#070a12"/>
+    <rect x="3" y="3" width="194" height="194" rx="25" stroke="#00f0ff" stroke-width="1.5" stroke-opacity="0.4"/>
+    <circle cx="100" cy="95" r="75" fill="url(#toGlow)"/>
+    <!-- Titanium Tank / Back Support -->
+    <rect x="68" y="38" width="64" height="48" rx="10" fill="url(#tiGrad)" stroke="#38bdf8" stroke-width="2"/>
+    <!-- Status Lights -->
+    <circle cx="82" cy="50" r="3" fill="#22c55e" filter="drop-shadow(0 0 4px #22c55e)"/>
+    <circle cx="94" cy="50" r="3" fill="#eab308"/>
+    <circle cx="106" cy="50" r="3" fill="#00f0ff" filter="drop-shadow(0 0 4px #00f0ff)"/>
+    <!-- Toilet Bowl -->
+    <path d="M58 80 Q100 75 142 80 Q135 138 100 138 Q65 138 58 80 Z" fill="url(#tiGrad)" stroke="#00f0ff" stroke-width="2"/>
+    <!-- Vortex Ring Lid -->
+    <ellipse cx="100" cy="82" rx="40" ry="14" fill="#0369a1" stroke="#38bdf8" stroke-width="2"/>
+    <ellipse cx="100" cy="82" rx="26" ry="8" fill="#082f49" stroke="#00f0ff" stroke-width="1.5"/>
+    <circle cx="100" cy="82" r="4" fill="#38bdf8" filter="drop-shadow(0 0 8px #00f0ff)"/>
+    <!-- Anti-Gravity Pneumatic Tubes -->
+    <path d="M60 100 Q48 115 58 130" stroke="#00f0ff" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+    <path d="M140 100 Q152 115 142 130" stroke="#00f0ff" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+    <!-- Label Banner -->
+    <rect x="25" y="156" width="150" height="24" rx="6" fill="#0c4a6e" stroke="#00f0ff" stroke-width="1.2"/>
+    <text x="100" y="172" font-size="11" font-family="monospace" font-weight="900" fill="#38bdf8" text-anchor="middle" letter-spacing="1">#05 太空馬桶</text>
+  </svg>
