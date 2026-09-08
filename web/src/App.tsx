@@ -32,6 +32,11 @@ export function App() {
   const [tickets, setTickets] = useState<number>(0);
   const [initialPending, setInitialPending] = useState<number>(0);
   const [miningRate, setMiningRate] = useState<number>(10);
+  const [maxIdleCoins, setMaxIdleCoins] = useState<number>(1000);
+  const [bonusMiningRate, setBonusMiningRate] = useState<number>(0);
+  const [bonusCapacity, setBonusCapacity] = useState<number>(0);
+  const [fleetLuck, setFleetLuck] = useState<number>(50);
+  const [activeBuffs, setActiveBuffs] = useState<any[]>([]);
   const [isRenameOpen, setIsRenameOpen] = useState<boolean>(false);
   const [isConnectModalOpen, setIsConnectModalOpen] = useState<boolean>(false);
 
@@ -51,6 +56,12 @@ export function App() {
       setCoins(0);
       setTickets(0);
       setInitialPending(0);
+      setMiningRate(10);
+      setMaxIdleCoins(1000);
+      setBonusMiningRate(0);
+      setBonusCapacity(0);
+      setFleetLuck(50);
+      setActiveBuffs([]);
       return;
     }
     try {
@@ -62,6 +73,11 @@ export function App() {
         setTickets(data.player.tickets);
         setInitialPending(data.pendingCoins);
         setMiningRate(data.miningRate || 10);
+        setMaxIdleCoins(data.maxIdleCoins || 1000);
+        setBonusMiningRate(data.bonusMiningRate || 0);
+        setBonusCapacity(data.bonusCapacity || 0);
+        setFleetLuck(data.fleetLuck || 50);
+        setActiveBuffs(data.activeBuffs || []);
       }
     } catch (err) {
       console.error("Failed to fetch player profile:", err);
@@ -133,7 +149,15 @@ export function App() {
                 tickets={tickets}
                 initialPending={initialPending}
                 miningRate={miningRate}
-                onClaimSuccess={(newCoins) => setCoins(newCoins)}
+                maxIdleCoins={maxIdleCoins}
+                bonusMiningRate={bonusMiningRate}
+                bonusCapacity={bonusCapacity}
+                fleetLuck={fleetLuck}
+                activeBuffs={activeBuffs}
+                onClaimSuccess={(newCoins) => {
+                  setCoins(newCoins);
+                  fetchProfile();
+                }}
                 onBuyTicketSuccess={(newCoins, newTickets) => {
                   setCoins(newCoins);
                   setTickets(newTickets);

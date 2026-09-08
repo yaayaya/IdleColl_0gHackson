@@ -7,7 +7,7 @@ import React, {
   ReactNode,
 } from "react";
 import { createPortal } from "react-dom";
-import { Sparkles, X } from "lucide-react";
+import { Sparkles, X, Zap } from "lucide-react";
 
 export interface GachaJob {
   id: number;
@@ -266,19 +266,42 @@ export const ScannerQueueProvider: React.FC<{
 
                   {/* AI Stats Tags */}
                   {revealedItem.collectible.aiStats && (
-                    <div className="grid grid-cols-2 gap-2 text-[10px] font-mono pt-1">
-                      <div className="p-2 rounded-lg bg-space-850/80 border border-space-800 text-gray-300">
-                        <span className="text-gray-500 block">特異詞條</span>
-                        <span className="text-cyan-300 font-bold truncate block">
-                          {revealedItem.collectible.aiStats.specialTrait || "星塵共鳴"}
-                        </span>
+                    <div className="space-y-2 pt-1">
+                      <div className="grid grid-cols-2 gap-2 text-[10px] font-mono">
+                        <div className="p-2 rounded-lg bg-space-850/80 border border-space-800 text-gray-300">
+                          <span className="text-gray-500 block flex items-center gap-1">
+                            <Zap className="w-2.5 h-2.5 text-amber-400" /> 產能加成
+                          </span>
+                          <span className="text-amber-300 font-bold block">
+                            {revealedItem.collectible.aiStats.miningBonus || "+15%"}
+                          </span>
+                        </div>
+                        <div className="p-2 rounded-lg bg-space-850/80 border border-space-800 text-gray-300">
+                          <span className="text-gray-500 block">📦 容量擴充</span>
+                          <span className="text-cyan-300 font-bold block">
+                            +{revealedItem.collectible.aiStats.capacityBonus || 200}
+                          </span>
+                        </div>
+                        <div className="p-2 rounded-lg bg-space-850/80 border border-space-800 text-gray-300">
+                          <span className="text-gray-500 block">🍀 幸運共振</span>
+                          <span className="text-emerald-300 font-bold block">
+                            {revealedItem.collectible.aiStats.luck || 50} / 100
+                          </span>
+                        </div>
+                        <div className="p-2 rounded-lg bg-space-850/80 border border-space-800 text-gray-300">
+                          <span className="text-gray-500 block">🏷️ 特異詞條</span>
+                          <span className="text-pink-300 font-bold truncate block" title={revealedItem.collectible.aiStats.specialTrait}>
+                            {revealedItem.collectible.aiStats.specialTrait || "星塵共鳴"}
+                          </span>
+                        </div>
                       </div>
-                      <div className="p-2 rounded-lg bg-space-850/80 border border-space-800 text-gray-300">
-                        <span className="text-gray-500 block">採礦產能加成</span>
-                        <span className="text-emerald-400 font-bold block">
-                          {revealedItem.collectible.aiStats.miningBonus || "+15%"}
-                        </span>
-                      </div>
+
+                      {revealedItem.collectible.aiStats.traitDescription && (
+                        <div className="p-2 rounded-lg bg-space-950/80 border border-space-800/80 text-[10px] font-mono text-gray-300">
+                          <span className="text-cyan-400 font-bold">詞條效能：</span>
+                          <span>{revealedItem.collectible.aiStats.traitDescription}</span>
+                        </div>
+                      )}
                     </div>
                   )}
                 </div>

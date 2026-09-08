@@ -19,14 +19,17 @@ interface IdleCockpitProps {
   tickets: number;
   initialPending: number;
   miningRate: number;
+  maxIdleCoins?: number;
+  bonusMiningRate?: number;
+  bonusCapacity?: number;
+  fleetLuck?: number;
+  activeBuffs?: { title: string; trait: string; bonusText: string }[];
   onClaimSuccess: (newCoins: number, claimed: number) => void;
   onBuyTicketSuccess: (newCoins: number, newTickets: number) => void;
   onConnectWallet: () => void;
   onRename: (newName: string) => Promise<boolean>;
   onNavigateToScanner: () => void;
 }
-
-const MAX_IDLE_COINS = 1000;
 
 export const IdleCockpit: React.FC<IdleCockpitProps> = ({
   address,
@@ -35,6 +38,11 @@ export const IdleCockpit: React.FC<IdleCockpitProps> = ({
   tickets,
   initialPending,
   miningRate,
+  maxIdleCoins = 1000,
+  bonusMiningRate = 0,
+  bonusCapacity = 0,
+  fleetLuck = 50,
+  activeBuffs = [],
   onClaimSuccess,
   onBuyTicketSuccess,
   onConnectWallet,
@@ -42,30 +50,31 @@ export const IdleCockpit: React.FC<IdleCockpitProps> = ({
   onNavigateToScanner,
 }) => {
   const { showWarning } = useDialog();
+  const effectiveMaxIdle = maxIdleCoins || 1000;
   const [livePending, setLivePending] = useState<number>(initialPending);
   const [isClaiming, setIsClaiming] = useState<boolean>(false);
   const [isBuying, setIsBuying] = useState<boolean>(false);
-  const [claimToast, setClaimToast] = useState<string | null>(null);
+  const [claimToast, setClaimToast] = useState<{ message: string; isCrit: boolean } | null>(null);
 
   // Synchronize livePending when initialPending changes
   useEffect(() => {
     if (address) {
-      setLivePending(Math.min(initialPending, MAX_IDLE_COINS));
+      setLivePending(Math.min(initialPending, effectiveMaxIdle));
     } else {
       setLivePending(0);
     }
-  }, [initialPending, address]);
+  }, [initialPending, address, effectiveMaxIdle]);
 
-  // Live ticking counter - ONLY tick if address is connected, and capped at 1000
+  // Live ticking counter - ONLY tick if address is connected, and capped at effectiveMaxIdle
   useEffect(() => {
     if (!address) return; // Do not tick if user is not logged in
 
     const timer = setInterval(() => {
-      setLivePending((prev) => Math.min(prev + miningRate, MAX_IDLE_COINS));
+      setLivePending((prev) => Math.min(prev + miningRate, effectiveMaxIdle));
     }, 1000);
 
     return () => clearInterval(timer);
-  }, [address, miningRate]);
+  }, [address, miningRate, effectiveMaxIdle]);
 
   const handleClaim = async () => {
     if (!address || isClaiming || livePending <= 0) return;
@@ -80,11 +89,26 @@ export const IdleCockpit: React.FC<IdleCockpitProps> = ({
         body: JSON.stringify({ address }),
       });
       const data = await res.json();
-      if (res.ok) {
+      if (res.ok && data.claimed > 0) {
         setLivePending(0);
         onClaimSuccess(data.player.coins, data.claimed);
-        setClaimToast(`+${data.claimed} 金幣已安全入帳！`);
-        setTimeout(() => setClaimToast(null), 2500);
+
+        if (typeof navigator !== "undefined" && navigator.vibrate) {
+          navigator.vibrate(data.isCrit ? [40, 60, 40] : [25]);
+        }
+
+        if (data.isCrit) {
+          setClaimToast({
+            message: `⚡ 0G 能量共振！觸發幸運爆擊（2倍收益）：+${data.claimed.toLocaleString()} 金幣！`,
+            isCrit: true,
+          });
+        } else {
+          setClaimToast({
+            message: `+${data.claimed.toLocaleString()} 金幣已安全入帳！`,
+            isCrit: false,
+          });
+        }
+        setTimeout(() => setClaimToast(null), 3000);
       }
     } catch (err) {
       console.error("Claim error:", err);
@@ -119,7 +143,10 @@ export const IdleCockpit: React.FC<IdleCockpitProps> = ({
       const data = await res.json();
       if (res.ok) {
         onBuyTicketSuccess(data.player.coins, data.player.tickets);
-        setClaimToast(`兌換成功！已獲得 ${count} 張深空探測券`);
+        setClaimToast({
+          message: `兌換成功！已獲得 ${count} 張深空探測券`,
+          isCrit: false,
+        });
         setTimeout(() => setClaimToast(null), 2500);
       }
     } catch (err) {
@@ -129,15 +156,21 @@ export const IdleCockpit: React.FC<IdleCockpitProps> = ({
     }
   };
 
-  const isCapped = livePending >= MAX_IDLE_COINS;
-  const progressPercent = Math.min(100, Math.round((livePending / MAX_IDLE_COINS) * 100));
+  const isCapped = livePending >= effectiveMaxIdle;
+  const progressPercent = Math.min(100, Math.round((livePending / effectiveMaxIdle) * 100));
 
   return (
     <div className="space-y-4 pb-20">
       {/* Toast Notification */}
       {claimToast && (
-        <div className="fixed top-16 left-1/2 -translate-x-1/2 z-50 bg-space-900 border-2 border-neon-cyan px-4 py-2 rounded-xl text-neon-cyan text-xs font-mono font-bold shadow-[0_0_20px_rgba(0,240,255,0.4)] animate-in fade-in slide-in-from-top-4 duration-200">
-          ✨ {claimToast}
+        <div
+          className={`fixed top-16 left-1/2 -translate-x-1/2 z-50 px-4 py-2.5 rounded-xl font-mono text-xs font-bold shadow-2xl animate-in fade-in slide-in-from-top-4 duration-200 flex items-center gap-2 ${
+            claimToast.isCrit
+              ? "bg-amber-950/95 border-2 border-amber-400 text-amber-200 shadow-[0_0_25px_rgba(245,158,11,0.6)]"
+              : "bg-space-900/95 border-2 border-neon-cyan text-neon-cyan shadow-[0_0_20px_rgba(0,240,255,0.4)]"
+          }`}
+        >
+          <span>{claimToast.message}</span>
         </div>
       )}
 
@@ -200,9 +233,17 @@ export const IdleCockpit: React.FC<IdleCockpitProps> = ({
               </div>
             </div>
 
-            <div className="flex items-center gap-1 px-2.5 py-1 rounded-full bg-cyan-950/60 border border-cyan-500/40 text-cyan-300 text-xs font-mono font-semibold">
-              <TrendingUp className="w-3.5 h-3.5 text-neon-cyan" />
-              <span>+{miningRate} 幣/秒</span>
+            <div className="flex items-center gap-1.5">
+              <div className="flex items-center gap-1 px-2.5 py-1 rounded-full bg-cyan-950/60 border border-cyan-500/40 text-cyan-300 text-xs font-mono font-semibold">
+                <TrendingUp className="w-3.5 h-3.5 text-neon-cyan" />
+                <span>+{miningRate} 幣/秒</span>
+              </div>
+              {bonusMiningRate > 0 && (
+                <span className="hidden sm:inline-flex items-center gap-0.5 px-2 py-0.5 rounded-full bg-purple-950/80 border border-purple-500/50 text-[10px] font-mono font-bold text-purple-300">
+                  <Zap className="w-2.5 h-2.5 text-purple-400" />
+                  <span>+{bonusMiningRate} 艦隊</span>
+                </span>
+              )}
             </div>
           </div>
 
@@ -221,7 +262,7 @@ export const IdleCockpit: React.FC<IdleCockpitProps> = ({
                 +{livePending.toLocaleString()}
               </div>
               <span className="text-xs font-mono text-gray-400 self-end mb-1">
-                / {MAX_IDLE_COINS}
+                / {effectiveMaxIdle.toLocaleString()}
               </span>
             </div>
 
@@ -241,11 +282,47 @@ export const IdleCockpit: React.FC<IdleCockpitProps> = ({
               <div className="flex items-center justify-between text-[10px] font-mono text-gray-400 px-0.5">
                 <span>儲能進度 {progressPercent}%</span>
                 <span className={isCapped ? "text-amber-400 font-bold" : "text-gray-400"}>
-                  {isCapped ? "⚡ 儲存池已滿載！" : `上限 ${MAX_IDLE_COINS} 金幣`}
+                  {isCapped
+                    ? "⚡ 儲存池已滿載！"
+                    : `上限 ${effectiveMaxIdle.toLocaleString()} 金幣 ${
+                        bonusCapacity > 0 ? `(艦隊擴充 +${bonusCapacity})` : ""
+                      }`}
                 </span>
               </div>
             </div>
           </div>
+
+          {/* Active Fleet Synergy Pills */}
+          {activeBuffs && activeBuffs.length > 0 && (
+            <div className="px-3 py-2 rounded-xl bg-space-950/80 border border-space-800/80 space-y-1.5 text-left">
+              <div className="flex items-center justify-between text-[10px] font-mono text-gray-400">
+                <span className="text-cyan-400 font-bold flex items-center gap-1">
+                  <Zap className="w-3 h-3 text-neon-cyan" />
+                  <span>星際艦隊賦能共振 (Fleet Synergy)</span>
+                </span>
+                <span className="text-purple-300">
+                  幸運值: {fleetLuck} · 賦能藏品: {activeBuffs.length} 件
+                </span>
+              </div>
+              <div className="flex flex-wrap gap-1.5">
+                {activeBuffs.slice(0, 3).map((buff, i) => (
+                  <span
+                    key={i}
+                    className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-space-850 border border-space-700/60 text-[10px] font-mono text-gray-300"
+                    title={buff.bonusText}
+                  >
+                    <span className="w-1 h-1 rounded-full bg-cyan-400" />
+                    <strong className="text-cyan-300">{buff.trait}</strong>
+                  </span>
+                ))}
+                {activeBuffs.length > 3 && (
+                  <span className="text-[10px] font-mono text-gray-500 self-center">
+                    +{activeBuffs.length - 3} 個更多詞條
+                  </span>
+                )}
+              </div>
+            </div>
+          )}
 
           {/* Claim Action Button */}
           <button

@@ -1,6 +1,22 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { ethers } from "ethers";
-import { ShoppingBag, PlusCircle, Tag, Check, ExternalLink, Zap, X, ShieldAlert } from "lucide-react";
+import {
+  ShoppingBag,
+  PlusCircle,
+  Tag,
+  Zap,
+  X,
+  ShieldAlert,
+  Search,
+  Eye,
+  Sparkles,
+  Database,
+  Layers,
+  ArrowUpDown,
+  Filter,
+  Check,
+  ExternalLink,
+} from "lucide-react";
 import { useDialog } from "../context/DialogContext.tsx";
 
 interface MarketplaceProps {
@@ -30,6 +46,45 @@ export const Marketplace: React.FC<MarketplaceProps> = ({
   const [selectedTokenId, setSelectedTokenId] = useState<number | null>(null);
   const [priceInput, setPriceInput] = useState<string>("0.005");
   const [actionStatus, setActionStatus] = useState<string | null>(null);
+
+  // Search, Filter & Inspection States
+  const [searchQuery, setSearchQuery] = useState<string>("");
+  const [rarityFilter, setRarityFilter] = useState<string>("ALL");
+  const [sortBy, setSortBy] = useState<"price-asc" | "price-desc" | "mining-desc" | "luck-desc" | "token-asc">("price-asc");
+  const [inspectItem, setInspectItem] = useState<any | null>(null);
+
+  // Helper to extract parsed stats
+  const parseStats = (details: any) => {
+    const stats = details?.aiStats || {};
+    const miningBonus = stats.miningBonus || (stats.miningBonusValue ? `+${stats.miningBonusValue}/s` : "+10%");
+    const miningBonusValue = Number(stats.miningBonusValue) || (parseFloat(stats.miningBonus) ? parseFloat(stats.miningBonus) / 10 : 1.0);
+    const capacityBonus = Number(stats.capacityBonus) || 100;
+    const luck = Number(stats.luck ?? stats.rarityScore) || 50;
+    const specialTrait = stats.specialTrait || "星塵共鳴";
+    const traitDescription = stats.traitDescription || `提供 ${miningBonus} 產能與 +${capacityBonus} 容量擴充`;
+
+    return {
+      miningBonus,
+      miningBonusValue,
+      capacityBonus,
+      luck,
+      specialTrait,
+      traitDescription,
+    };
+  };
+
+  const getRarityBadgeColor = (rarity: string) => {
+    switch (rarity) {
+      case "Legendary":
+        return "bg-amber-500/20 text-amber-300 border-amber-500/60";
+      case "Epic":
+        return "bg-pink-500/20 text-pink-300 border-pink-500/50";
+      case "Rare":
+        return "bg-purple-500/20 text-purple-300 border-purple-500/50";
+      default:
+        return "bg-cyan-500/20 text-cyan-300 border-cyan-500/40";
+    }
+  };
 
   // Fetch active listings from 0G Marketplace contract (read-only direct from 0G RPC)
   const fetchListings = useCallback(async () => {
@@ -225,6 +280,9 @@ export const Marketplace: React.FC<MarketplaceProps> = ({
       await fetchListings();
       onTradeComplete();
       showSuccess(`購買成功！已支付 ${listing.price} 0G，Token #${listing.tokenId} 已安全轉入你的錢包與圖鑑！`, "0G 鏈上交易成功");
+      if (inspectItem?.listingId === listing.listingId) {
+        setInspectItem(null);
+      }
     } catch (err: any) {
       console.error("Buy error:", err);
       setActionStatus(null);
@@ -272,6 +330,9 @@ export const Marketplace: React.FC<MarketplaceProps> = ({
           setActionStatus(null);
           await fetchListings();
           showSuccess("藏品已成功從 0G 拍賣行撤回！", "下架完成");
+          if (inspectItem?.listingId === listingId) {
+            setInspectItem(null);
+          }
         } catch (err: any) {
           console.error("Cancel error:", err);
           setActionStatus(null);
@@ -285,6 +346,58 @@ export const Marketplace: React.FC<MarketplaceProps> = ({
       },
     });
   };
+
+  // Filter & Sort listings
+  const filteredListings = useMemo(() => {
+    return listings
+      .filter((item) => {
+        // 1. Rarity filter
+        const rarity = item.details?.archetype?.rarity || "Common";
+        if (rarityFilter !== "ALL" && rarity.toLowerCase() !== rarityFilter.toLowerCase()) {
+          return false;
+        }
+
+        // 2. Search query filter (title, archetype name, trait name, tokenId)
+        if (searchQuery.trim()) {
+          const q = searchQuery.toLowerCase().trim();
+          const title = (item.details?.aiTitle || "").toLowerCase();
+          const archName = (item.details?.archetype?.name || "").toLowerCase();
+          const trait = (item.details?.aiStats?.specialTrait || "").toLowerCase();
+          const traitDesc = (item.details?.aiStats?.traitDescription || "").toLowerCase();
+          const tokenIdStr = String(item.tokenId);
+          return (
+            title.includes(q) ||
+            archName.includes(q) ||
+            trait.includes(q) ||
+            traitDesc.includes(q) ||
+            tokenIdStr.includes(q)
+          );
+        }
+
+        return true;
+      })
+      .sort((a, b) => {
+        const priceA = parseFloat(a.price) || 0;
+        const priceB = parseFloat(b.price) || 0;
+        const statsA = parseStats(a.details);
+        const statsB = parseStats(b.details);
+
+        switch (sortBy) {
+          case "price-asc":
+            return priceA - priceB;
+          case "price-desc":
+            return priceB - priceA;
+          case "mining-desc":
+            return statsB.miningBonusValue - statsA.miningBonusValue;
+          case "luck-desc":
+            return statsB.luck - statsA.luck;
+          case "token-asc":
+            return a.tokenId - b.tokenId;
+          default:
+            return 0;
+        }
+      });
+  }, [listings, rarityFilter, searchQuery, sortBy]);
 
   return (
     <div className="space-y-4 pb-20">
@@ -363,47 +476,159 @@ export const Marketplace: React.FC<MarketplaceProps> = ({
         </div>
       )}
 
+      {/* Search & Filter Toolbar */}
+      <div className="rounded-2xl bg-space-900/90 border border-space-750 p-3 space-y-2.5 shadow-md">
+        {/* Search Bar + Sort Select */}
+        <div className="flex items-center gap-2">
+          <div className="relative flex-1">
+            <Search className="w-3.5 h-3.5 absolute left-3 top-2.5 text-gray-500" />
+            <input
+              type="text"
+              placeholder="搜尋名稱、特異詞條或 Token ID..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full py-1.5 pl-8 pr-7 rounded-lg bg-space-950 border border-space-800 text-xs font-mono text-gray-200 placeholder-gray-500 focus:outline-none focus:border-neon-cyan transition-colors"
+            />
+            {searchQuery && (
+              <button
+                onClick={() => setSearchQuery("")}
+                className="absolute right-2.5 top-2 text-gray-500 hover:text-gray-300"
+              >
+                <X className="w-3 h-3" />
+              </button>
+            )}
+          </div>
+
+          <div className="relative shrink-0">
+            <select
+              value={sortBy}
+              onChange={(e: any) => setSortBy(e.target.value)}
+              className="py-1.5 px-2.5 rounded-lg bg-space-950 border border-space-800 text-[11px] font-mono text-cyan-300 focus:outline-none focus:border-neon-cyan cursor-pointer"
+            >
+              <option value="price-asc">價格：低 → 高</option>
+              <option value="price-desc">價格：高 → 低</option>
+              <option value="mining-desc">⚡ 產能加成最高</option>
+              <option value="luck-desc">🍀 幸運共振最高</option>
+              <option value="token-asc">Token ID 序</option>
+            </select>
+          </div>
+        </div>
+
+        {/* Rarity Pills Filter */}
+        <div className="flex items-center justify-between pt-1">
+          <div className="flex items-center gap-1 overflow-x-auto no-scrollbar py-0.5">
+            {[
+              { id: "ALL", label: "全部" },
+              { id: "Common", label: "普通" },
+              { id: "Rare", label: "稀有" },
+              { id: "Epic", label: "史詩" },
+              { id: "Legendary", label: "傳奇" },
+            ].map((r) => (
+              <button
+                key={r.id}
+                onClick={() => setRarityFilter(r.id)}
+                className={`px-2.5 py-1 rounded-md text-[10px] font-mono whitespace-nowrap transition-all ${
+                  rarityFilter === r.id
+                    ? "bg-cyan-500/20 text-neon-cyan border border-neon-cyan/80 font-bold shadow-[0_0_8px_rgba(0,240,255,0.3)]"
+                    : "bg-space-950/70 text-gray-400 border border-space-800 hover:text-gray-200"
+                }`}
+              >
+                {r.label}
+              </button>
+            ))}
+          </div>
+
+          <span className="text-[10px] font-mono text-gray-500 shrink-0 pl-2">
+            共 {filteredListings.length} 件
+          </span>
+        </div>
+      </div>
+
       {/* Listings Grid */}
       {loading ? (
         <div className="py-12 text-center text-gray-400 font-mono text-xs">
           讀取 0G 拍賣行資料中...
         </div>
-      ) : listings.length === 0 ? (
+      ) : filteredListings.length === 0 ? (
         <div className="rounded-2xl bg-space-900 border border-space-800 p-8 text-center space-y-2">
-          <p className="text-gray-400 font-mono text-xs">目前拍賣行尚無掛售中的藏品</p>
-          <p className="text-[11px] text-gray-500 font-mono">點擊右上角「上架藏品」成為第一個在 0G 擺攤的星際商人！</p>
+          <p className="text-gray-400 font-mono text-xs">
+            {listings.length === 0 ? "目前拍賣行尚無掛售中的藏品" : "沒有符合篩選條件的藏品"}
+          </p>
+          <p className="text-[11px] text-gray-500 font-mono">
+            {listings.length === 0
+              ? "點擊右上角「上架藏品」成為第一個在 0G 擺攤的星際商人！"
+              : "請嘗試切換稀有度或清除搜尋關鍵字"}
+          </p>
         </div>
       ) : (
         <div className="grid grid-cols-2 gap-3">
-          {listings.map((item) => {
+          {filteredListings.map((item) => {
             const isSeller = address && item.seller === address.toLowerCase();
             const fallbackTitle = item.details?.aiTitle || `0G Collectible #${item.tokenId}`;
             const image = (item.details?.archetype?.baseImage || "/items/01_ramen.svg").replace(".png", ".svg");
             const rarity = item.details?.archetype?.rarity || "Common";
+            const stats = parseStats(item.details);
 
             return (
               <div
                 key={item.listingId}
-                className="rounded-xl bg-space-900 border border-space-700/80 p-3 flex flex-col justify-between space-y-2 shadow-lg hover:border-neon-cyan/50 transition-all"
+                className="rounded-xl bg-space-900 border border-space-700/80 p-3 flex flex-col justify-between space-y-2 shadow-lg hover:border-neon-cyan/50 transition-all relative group"
               >
-                {/* Artwork */}
-                <div className="w-full aspect-square rounded-lg bg-space-950 p-2 flex items-center justify-center border border-space-800">
-                  <img src={image} alt={fallbackTitle} className="max-w-full max-h-full object-contain" />
+                {/* Artwork (Click to Inspect) */}
+                <div
+                  onClick={() => setInspectItem(item)}
+                  className="w-full aspect-square rounded-lg bg-space-950 p-2 flex items-center justify-center border border-space-800 cursor-pointer relative overflow-hidden group-hover:border-cyan-500/50 transition-all"
+                  title="點擊檢視 0G 特異詞條與背景"
+                >
+                  <img src={image} alt={fallbackTitle} className="max-w-full max-h-full object-contain transition-transform group-hover:scale-105" />
+                  <span className="absolute bottom-1 right-1 px-1.5 py-0.5 rounded bg-black/70 text-[9px] font-mono text-cyan-300 flex items-center gap-0.5 backdrop-blur-xs opacity-80 group-hover:opacity-100">
+                    <Eye className="w-2.5 h-2.5" /> 檢測
+                  </span>
                 </div>
 
-                {/* Details */}
-                <div className="space-y-1 text-left">
+                {/* Details & Traits */}
+                <div className="space-y-1.5 text-left">
                   <div className="flex items-center justify-between text-[9px] font-mono">
-                    <span className="text-purple-300 font-bold">{rarity}</span>
+                    <span className={`px-1.5 py-0.5 rounded border font-bold ${getRarityBadgeColor(rarity)}`}>
+                      {rarity}
+                    </span>
                     <span className="text-gray-500">#{item.tokenId}</span>
                   </div>
-                  <h4 className="text-xs font-bold font-mono text-gray-100 truncate" title={fallbackTitle}>
+
+                  <h4
+                    onClick={() => setInspectItem(item)}
+                    className="text-xs font-bold font-mono text-gray-100 truncate cursor-pointer hover:text-neon-cyan transition-colors"
+                    title={fallbackTitle}
+                  >
                     {fallbackTitle}
                   </h4>
-                  <p className="text-[10px] text-gray-400 font-mono truncate">
+
+                  {/* Trait Chips */}
+                  <div className="space-y-1 pt-0.5">
+                    <div className="flex items-center gap-1 text-[9px] font-mono text-cyan-300 truncate bg-space-950/80 px-1.5 py-0.5 rounded border border-space-800">
+                      <Zap className="w-2.5 h-2.5 text-amber-400 shrink-0" />
+                      <span className="truncate">產能 {stats.miningBonus}</span>
+                    </div>
+
+                    <div className="flex items-center gap-1 text-[9px] font-mono text-purple-300 truncate bg-space-950/80 px-1.5 py-0.5 rounded border border-space-800">
+                      <Sparkles className="w-2.5 h-2.5 text-purple-400 shrink-0" />
+                      <span className="truncate font-bold">{stats.specialTrait}</span>
+                    </div>
+                  </div>
+
+                  <p className="text-[10px] text-gray-400 font-mono truncate pt-0.5">
                     賣家: {item.seller.slice(0, 6)}...{item.seller.slice(-4)}
                   </p>
                 </div>
+
+                {/* Inspect Trigger Button */}
+                <button
+                  onClick={() => setInspectItem(item)}
+                  className="w-full py-1 rounded bg-space-850 hover:bg-space-800 border border-space-700 text-cyan-300 text-[10px] font-mono flex items-center justify-center gap-1 transition-colors active:scale-95"
+                >
+                  <Eye className="w-3 h-3" />
+                  <span>檢測特異詞條</span>
+                </button>
 
                 {/* Price & Action */}
                 <div className="pt-2 border-t border-space-800 flex items-center justify-between gap-1">
@@ -415,7 +640,7 @@ export const Marketplace: React.FC<MarketplaceProps> = ({
                   {isSeller ? (
                     <button
                       onClick={() => handleCancel(item.listingId)}
-                      className="px-2 py-1 rounded bg-space-800 hover:bg-red-950/80 border border-space-700 hover:border-red-500 text-red-300 text-[10px] font-mono"
+                      className="px-2.5 py-1 rounded bg-space-800 hover:bg-red-950/80 border border-space-700 hover:border-red-500 text-red-300 text-[10px] font-mono"
                     >
                       下架
                     </button>
@@ -434,10 +659,189 @@ export const Marketplace: React.FC<MarketplaceProps> = ({
         </div>
       )}
 
+      {/* Holographic Inspection Modal */}
+      {inspectItem && (
+        <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-4">
+          <div className="relative w-full max-w-sm rounded-2xl bg-space-900 border-2 border-neon-cyan p-5 shadow-[0_0_40px_rgba(0,240,255,0.4)] max-h-[90vh] flex flex-col text-left">
+            <button
+              onClick={() => setInspectItem(null)}
+              className="absolute top-3 right-3 p-1.5 rounded-full bg-space-800 text-gray-400 hover:text-white transition-colors"
+            >
+              <X className="w-4 h-4" />
+            </button>
+
+            {/* Modal Header */}
+            <div className="pb-3 border-b border-space-800 flex items-center gap-2">
+              <Eye className="w-4 h-4 text-neon-cyan" />
+              <div>
+                <h3 className="text-xs font-bold font-mono tracking-wider text-gray-200 uppercase">
+                  0G 藏品特異共振檢測儀
+                </h3>
+                <p className="text-[10px] text-gray-400 font-mono">
+                  Token #{inspectItem.tokenId} · 鏈上智能合約認證
+                </p>
+              </div>
+            </div>
+
+            {/* Scrollable Content */}
+            <div className="my-3 space-y-3.5 overflow-y-auto pr-1 flex-1">
+              {/* Item Visual Card */}
+              <div className="flex items-center gap-3 p-3 rounded-xl bg-space-950/80 border border-space-800">
+                <div className="w-16 h-16 rounded-lg bg-space-900 p-2 flex items-center justify-center border border-space-700 shrink-0">
+                  <img
+                    src={(inspectItem.details?.archetype?.baseImage || "/items/01_ramen.svg").replace(".png", ".svg")}
+                    alt={inspectItem.details?.aiTitle}
+                    className="max-w-full max-h-full object-contain"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <span
+                    className={`inline-block px-2 py-0.5 rounded text-[9px] font-mono font-bold border ${getRarityBadgeColor(
+                      inspectItem.details?.archetype?.rarity || "Common"
+                    )}`}
+                  >
+                    {inspectItem.details?.archetype?.rarity || "Common"} 級原型 · {inspectItem.details?.archetype?.name || "未知"}
+                  </span>
+                  <h4 className="text-sm font-bold font-mono text-cyan-200 leading-snug">
+                    {inspectItem.details?.aiTitle || `0G 藏品 #${inspectItem.tokenId}`}
+                  </h4>
+                </div>
+              </div>
+
+              {/* Unique Lore & Backstory */}
+              <div className="space-y-1">
+                <label className="text-[10px] font-mono text-gray-400 font-semibold flex items-center gap-1">
+                  <Sparkles className="w-3 h-3 text-cyan-400" />
+                  <span>0G AI 解算背景傳奇：</span>
+                </label>
+                <div className="p-3 rounded-xl bg-space-850/90 border border-space-750 text-xs text-gray-300 leading-relaxed">
+                  {inspectItem.details?.aiLore || "深空考古隊尚未解讀完整的星際歷史記錄。"}
+                </div>
+              </div>
+
+              {/* Personality Tag if present */}
+              {inspectItem.details?.aiPersonality && (
+                <div className="px-3 py-1.5 rounded-lg bg-purple-950/40 border border-purple-800/50 text-[11px] font-mono text-purple-200 flex items-center gap-1.5">
+                  <span className="text-purple-400 font-bold">個性特徵：</span>
+                  <span>{inspectItem.details.aiPersonality}</span>
+                </div>
+              )}
+
+              {/* 4 Functional Stat Tiles */}
+              {(() => {
+                const stats = parseStats(inspectItem.details);
+                return (
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-mono text-gray-400 font-semibold flex items-center gap-1">
+                      <Zap className="w-3 h-3 text-amber-400" />
+                      <span>特異實時增幅效能 (Fleet Bonuses)：</span>
+                    </label>
+
+                    <div className="grid grid-cols-2 gap-2 text-left">
+                      {/* Tile 1: Mining Bonus */}
+                      <div className="p-2.5 rounded-xl bg-space-850 border border-space-750 space-y-0.5">
+                        <span className="text-[10px] font-mono text-gray-400 block">⚡ 採礦產能加成</span>
+                        <span className="text-xs font-mono font-bold text-amber-300 block">
+                          {stats.miningBonus}
+                        </span>
+                        <span className="text-[9px] font-mono text-gray-500 block">
+                          +{stats.miningBonusValue} 幣/秒產率
+                        </span>
+                      </div>
+
+                      {/* Tile 2: Capacity Bonus */}
+                      <div className="p-2.5 rounded-xl bg-space-850 border border-space-750 space-y-0.5">
+                        <span className="text-[10px] font-mono text-gray-400 block">📦 離線池容量擴充</span>
+                        <span className="text-xs font-mono font-bold text-cyan-300 block">
+                          +{stats.capacityBonus} 金幣
+                        </span>
+                        <span className="text-[9px] font-mono text-gray-500 block">
+                          擴充放置儲能上限
+                        </span>
+                      </div>
+
+                      {/* Tile 3: Luck */}
+                      <div className="p-2.5 rounded-xl bg-space-850 border border-space-750 space-y-0.5">
+                        <span className="text-[10px] font-mono text-gray-400 block">🍀 幸運共振指數</span>
+                        <span className="text-xs font-mono font-bold text-emerald-300 block">
+                          {stats.luck} / 100
+                        </span>
+                        <span className="text-[9px] font-mono text-gray-500 block">
+                          提升採收 2x 爆擊機率
+                        </span>
+                      </div>
+
+                      {/* Tile 4: Special Trait */}
+                      <div className="p-2.5 rounded-xl bg-space-850 border border-space-750 space-y-0.5">
+                        <span className="text-[10px] font-mono text-gray-400 block">🏷️ 特異共振詞條</span>
+                        <span className="text-xs font-mono font-bold text-pink-300 block truncate" title={stats.specialTrait}>
+                          {stats.specialTrait}
+                        </span>
+                        <span className="text-[9px] font-mono text-gray-500 block truncate" title={stats.traitDescription}>
+                          {stats.traitDescription}
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Trait In-Depth Explanation */}
+                    <div className="p-2.5 rounded-xl bg-space-950/90 border border-space-800 text-[11px] font-mono text-gray-300 leading-relaxed">
+                      <span className="text-cyan-400 font-bold">詞條解析：</span>
+                      <span>{stats.traitDescription}</span>
+                    </div>
+                  </div>
+                );
+              })()}
+
+              {/* On-Chain Provenance (0G Storage & Seller) */}
+              <div className="p-2.5 rounded-xl bg-space-950 border border-space-850 space-y-1.5 text-[10px] font-mono text-gray-400">
+                <div className="flex items-center justify-between">
+                  <span className="flex items-center gap-1 text-cyan-400">
+                    <Database className="w-3 h-3" /> 0G Storage Root
+                  </span>
+                  <span className="text-gray-300 truncate max-w-[160px]" title={inspectItem.details?.storageHash || "鏈上存證"}>
+                    {inspectItem.details?.storageHash || "0G-Decentralized-Storage"}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span>掛售賣家：</span>
+                  <span className="text-gray-300 font-mono">
+                    {inspectItem.seller}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {/* Modal Bottom Actions */}
+            <div className="pt-3 border-t border-space-800 flex items-center justify-between gap-3">
+              <div className="flex items-center gap-1 text-sm font-mono font-bold text-cyan-300">
+                <Zap className="w-4 h-4 text-neon-cyan" />
+                <span>{inspectItem.price} 0G</span>
+              </div>
+
+              {address && inspectItem.seller === address.toLowerCase() ? (
+                <button
+                  onClick={() => handleCancel(inspectItem.listingId)}
+                  className="px-4 py-2 rounded-xl bg-red-950/80 hover:bg-red-900 border border-red-500/80 text-red-200 text-xs font-mono font-bold shadow-md active:scale-95"
+                >
+                  下架藏品
+                </button>
+              ) : (
+                <button
+                  onClick={() => handleBuy(inspectItem)}
+                  className="flex-1 py-2.5 rounded-xl bg-gradient-to-r from-neon-cyan to-blue-500 hover:from-cyan-400 hover:to-blue-400 text-black text-xs font-mono font-bold shadow-[0_0_15px_rgba(0,240,255,0.4)] active:scale-95"
+                >
+                  以 {inspectItem.price} 0G 立即購買
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Listing Modal */}
       {isListingModalOpen && (
         <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-4">
-          <div className="relative w-full max-w-sm rounded-2xl bg-space-900 border-2 border-neon-cyan p-5 shadow-[0_0_35px_rgba(0,240,255,0.4)] space-y-4">
+          <div className="relative w-full max-w-sm rounded-2xl bg-space-900 border-2 border-neon-cyan p-5 shadow-[0_0_35px_rgba(0,240,255,0.4)] space-y-4 text-left">
             <button
               onClick={() => setIsListingModalOpen(false)}
               className="absolute top-3 right-3 p-1.5 rounded-full bg-space-800 text-gray-400 hover:text-white"

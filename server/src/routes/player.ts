@@ -1,14 +1,67 @@
 import { FastifyInstance } from "fastify";
 import { db } from "../db/index.js";
-import { players } from "../db/schema.js";
+import { players, collectibles } from "../db/schema.js";
 import { eq } from "drizzle-orm";
 
-const COINS_PER_SECOND = 10; // 10 coins per second for fast testing & gameplay
-const MAX_IDLE_COINS = 1000; // Capped at 1000 coins maximum accumulation
+const BASE_COINS_PER_SECOND = 10;
+const BASE_MAX_IDLE_COINS = 1000;
 const MAX_OFFLINE_HOURS = 24;
 
+async function calculateFleetBonuses(walletAddress: string) {
+  const items = await db.query.collectibles.findMany({
+    where: eq(collectibles.ownerAddress, walletAddress.toLowerCase()),
+  });
+
+  let totalMiningBonusValue = 0;
+  let totalCapacityBonus = 0;
+  let totalLuck = 0;
+  const activeBuffs: { title: string; trait: string; bonusText: string }[] = [];
+
+  for (const item of items) {
+    const stats = (item.aiStats || {}) as any;
+    // mining bonus
+    const mbVal =
+      Number(stats.miningBonusValue) ||
+      (stats.miningBonus ? parseFloat(String(stats.miningBonus).replace(/[^0-9.]/g, "")) / 10 : 0) ||
+      1.0;
+    totalMiningBonusValue += mbVal;
+
+    // capacity bonus
+    const capVal = Number(stats.capacityBonus) || 150;
+    totalCapacityBonus += capVal;
+
+    // luck
+    const luckVal = Number(stats.luck) || 50;
+    totalLuck += luckVal;
+
+    if (stats.specialTrait) {
+      activeBuffs.push({
+        title: item.aiTitle,
+        trait: stats.specialTrait,
+        bonusText: stats.traitDescription || `+${mbVal.toFixed(1)} 幣/秒，+${capVal} 儲能上限`,
+      });
+    }
+  }
+
+  const effectiveMiningRate = parseFloat((BASE_COINS_PER_SECOND + totalMiningBonusValue).toFixed(1));
+  const effectiveMaxIdleCoins = BASE_MAX_IDLE_COINS + totalCapacityBonus;
+  const fleetLuck = items.length > 0 ? Math.round(totalLuck / items.length) : 50;
+
+  return {
+    itemsCount: items.length,
+    baseRate: BASE_COINS_PER_SECOND,
+    bonusRate: parseFloat(totalMiningBonusValue.toFixed(1)),
+    effectiveMiningRate,
+    baseCapacity: BASE_MAX_IDLE_COINS,
+    bonusCapacity: totalCapacityBonus,
+    effectiveMaxIdleCoins,
+    fleetLuck,
+    activeBuffs: activeBuffs.slice(0, 5),
+  };
+}
+
 export async function playerRoutes(app: FastifyInstance) {
-  // Get or initialize player profile
+  // Get or initialize player profile with dynamic fleet bonuses
   app.get("/api/player/profile", async (req, reply) => {
     const { address } = req.query as { address?: string };
     if (!address) {
@@ -32,26 +85,35 @@ export async function playerRoutes(app: FastifyInstance) {
       player = newPlayer as any;
     }
 
-    // Calculate pending idle coins with max cap of 1000
+    const fleet = await calculateFleetBonuses(cleanAddress);
+
+    // Calculate pending idle coins with dynamic capacity and dynamic rate
     const now = Date.now();
     const lastClaim = new Date(player!.lastClaimAt).getTime();
     const elapsedSeconds = Math.min(
       Math.max(0, Math.floor((now - lastClaim) / 1000)),
       MAX_OFFLINE_HOURS * 3600
     );
-    const rawPending = elapsedSeconds * COINS_PER_SECOND;
-    const pendingCoins = Math.min(rawPending, MAX_IDLE_COINS);
+    const rawPending = Math.floor(elapsedSeconds * fleet.effectiveMiningRate);
+    const pendingCoins = Math.min(rawPending, fleet.effectiveMaxIdleCoins);
 
     return {
       player,
-      miningRate: COINS_PER_SECOND,
+      miningRate: fleet.effectiveMiningRate,
+      baseMiningRate: fleet.baseRate,
+      bonusMiningRate: fleet.bonusRate,
       pendingCoins,
-      maxIdleCoins: MAX_IDLE_COINS,
+      maxIdleCoins: fleet.effectiveMaxIdleCoins,
+      baseCapacity: fleet.baseCapacity,
+      bonusCapacity: fleet.bonusCapacity,
+      fleetLuck: fleet.fleetLuck,
+      fleetItemsCount: fleet.itemsCount,
+      activeBuffs: fleet.activeBuffs,
       elapsedSeconds,
     };
   });
 
-  // Claim idle coins (capped at MAX_IDLE_COINS)
+  // Claim idle coins with dynamic fleet stats and luck critical chance
   app.post("/api/player/claim", async (req, reply) => {
     const { address } = req.body as { address?: string };
     if (!address) {
@@ -67,17 +129,26 @@ export async function playerRoutes(app: FastifyInstance) {
       return reply.status(404).send({ error: "Player not found" });
     }
 
+    const fleet = await calculateFleetBonuses(cleanAddress);
+
     const now = Date.now();
     const lastClaim = new Date(player.lastClaimAt).getTime();
     const elapsedSeconds = Math.min(
       Math.max(0, Math.floor((now - lastClaim) / 1000)),
       MAX_OFFLINE_HOURS * 3600
     );
-    const rawEarned = elapsedSeconds * COINS_PER_SECOND;
-    const earnedCoins = Math.min(rawEarned, MAX_IDLE_COINS);
+    const rawEarned = Math.floor(elapsedSeconds * fleet.effectiveMiningRate);
+    let earnedCoins = Math.min(rawEarned, fleet.effectiveMaxIdleCoins);
 
     if (earnedCoins <= 0) {
-      return { player, claimed: 0 };
+      return { player, claimed: 0, isCrit: false };
+    }
+
+    // Critical harvest check based on fleet luck (up to 30% chance for 2x payout)
+    const critChance = Math.min(0.35, (fleet.fleetLuck / 100) * 0.25);
+    const isCrit = Math.random() < critChance;
+    if (isCrit) {
+      earnedCoins = earnedCoins * 2;
     }
 
     const newCoins = player.coins + earnedCoins;
@@ -93,6 +164,9 @@ export async function playerRoutes(app: FastifyInstance) {
 
     return {
       claimed: earnedCoins,
+      isCrit,
+      miningRate: fleet.effectiveMiningRate,
+      maxIdleCoins: fleet.effectiveMaxIdleCoins,
       player: {
         ...player,
         coins: newCoins,

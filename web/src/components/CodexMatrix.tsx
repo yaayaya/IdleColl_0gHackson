@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { BookOpen, Lock, Sparkles, X, Database, ExternalLink, ShieldCheck } from "lucide-react";
+import { BookOpen, Lock, Sparkles, X, Database, ExternalLink, ShieldCheck, Zap } from "lucide-react";
 
 interface CodexSlot {
   archetype: {
@@ -185,10 +185,27 @@ export const CodexMatrix: React.FC<CodexMatrixProps> = ({ address }) => {
                     {variant.aiLore}
                   </p>
 
-                  <div className="flex items-center justify-between text-[10px] font-mono text-gray-400">
-                    <span>特性: <span className="text-purple-300">{variant.aiStats?.specialTrait}</span></span>
-                    <span>幸運: <span className="text-cyan-300">{variant.aiStats?.luck}</span></span>
+                  <div className="grid grid-cols-2 gap-1.5 text-[10px] font-mono text-gray-300 bg-space-950/60 p-2 rounded-lg border border-space-800">
+                    <span className="flex items-center gap-1 text-amber-300 truncate">
+                      <Zap className="w-2.5 h-2.5 text-amber-400 shrink-0" />
+                      產能 {variant.aiStats?.miningBonus || "+10%"}
+                    </span>
+                    <span className="flex items-center gap-1 text-cyan-300 truncate">
+                      📦 容量 +{variant.aiStats?.capacityBonus || 100}
+                    </span>
+                    <span className="flex items-center gap-1 text-emerald-300 truncate">
+                      🍀 幸運 {variant.aiStats?.luck ?? 50}
+                    </span>
+                    <span className="flex items-center gap-1 text-pink-300 truncate" title={variant.aiStats?.specialTrait}>
+                      🏷️ {variant.aiStats?.specialTrait || "星塵共鳴"}
+                    </span>
                   </div>
+
+                  {variant.aiStats?.traitDescription && (
+                    <p className="text-[9px] font-mono text-gray-400 bg-space-950/40 px-2 py-1 rounded border border-space-800/60">
+                      💡 {variant.aiStats.traitDescription}
+                    </p>
+                  )}
 
                   <div className="pt-1.5 border-t border-space-800 flex items-center justify-between text-[9px] font-mono text-gray-400">
                     <span className="flex items-center gap-1">
