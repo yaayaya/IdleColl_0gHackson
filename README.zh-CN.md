@@ -15,7 +15,7 @@
 
 <p align="center">
   <a href="https://idlecoll.yayayayaya.xyz" target="_blank">
-    <img src="https://img.shields.io/badge/🎮_Live_Game-idlecoll.yayayayaya.xyz-00f0ff?style=for-the-badge&logoColor=black" alt="Live Game DApp" />
+    <img src="https://img.shields.io/badge/🎮_Live_Game-idlecoll.yayayayaya.xyz-10b981?style=for-the-badge" alt="Live Game DApp" />
   </a>
   <a href="https://idlecoll.yayayayaya.xyz/presentation.html" target="_blank">
     <img src="https://img.shields.io/badge/📊_Pitch_Deck-线上简报展演-a855f7?style=for-the-badge" alt="Presentation Deck" />
@@ -28,7 +28,7 @@
 <p align="center">
   <a href="https://idlecoll.yayayayaya.xyz" target="_blank">
     <img src="web/public/qrcode.png" alt="Scan to Play IdleColl" width="160" /><br>
-    <b>📱 手机扫码立即游玩 (Scan QR Code to Play)</b><br>
+    <b>📱 SCAN QR CODE TO PLAY</b><br>
     <sub>🔗 <a href="https://idlecoll.yayayayaya.xyz">https://idlecoll.yayayayaya.xyz</a></sub>
   </a>
 </p>
@@ -217,7 +217,7 @@ npx hardhat run scripts/deploy.ts --network zeroG
 
 1. **线上体验网址**：[https://idlecoll.yayayayaya.xyz](https://idlecoll.yayayayaya.xyz)
 2. **黑客松线上简报**：[https://idlecoll.yayayayaya.xyz/presentation.html](https://idlecoll.yayayayaya.xyz/presentation.html)
-3. **手机扫码即刻体验**：
+3. **SCAN QR CODE TO PLAY**：
    <br><a href="https://idlecoll.yayayayaya.xyz"><img src="web/public/qrcode.png" alt="IdleColl QR Code" width="140" /></a>
 4. **手机钱包浏览方式**：
    - 打开 **MetaMask App** ➔ 点击底部“浏览器”图标 ➔ 输入网址即可直接游玩。

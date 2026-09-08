@@ -15,7 +15,7 @@
 
 <p align="center">
   <a href="https://idlecoll.yayayayaya.xyz" target="_blank">
-    <img src="https://img.shields.io/badge/🎮_Live_Game-idlecoll.yayayayaya.xyz-00f0ff?style=for-the-badge&logoColor=black" alt="Live Game DApp" />
+    <img src="https://img.shields.io/badge/🎮_Live_Game-idlecoll.yayayayaya.xyz-10b981?style=for-the-badge" alt="Live Game DApp" />
   </a>
   <a href="https://idlecoll.yayayayaya.xyz/presentation.html" target="_blank">
     <img src="https://img.shields.io/badge/📊_Pitch_Deck-線上簡報展演-a855f7?style=for-the-badge" alt="Presentation Deck" />
@@ -28,7 +28,7 @@
 <p align="center">
   <a href="https://idlecoll.yayayayaya.xyz" target="_blank">
     <img src="web/public/qrcode.png" alt="Scan to Play IdleColl" width="160" /><br>
-    <b>📱 手機掃碼立即遊玩 (Scan QR Code to Play)</b><br>
+    <b>📱 SCAN QR CODE TO PLAY</b><br>
     <sub>🔗 <a href="https://idlecoll.yayayayaya.xyz">https://idlecoll.yayayayaya.xyz</a></sub>
   </a>
 </p>
@@ -217,7 +217,7 @@ npx hardhat run scripts/deploy.ts --network zeroG
 
 1. **線上體驗網址**：[https://idlecoll.yayayayaya.xyz](https://idlecoll.yayayayaya.xyz)
 2. **黑客松線上簡報**：[https://idlecoll.yayayayaya.xyz/presentation.html](https://idlecoll.yayayayaya.xyz/presentation.html)
-3. **手機掃碼即刻體驗**：
+3. **SCAN QR CODE TO PLAY**：
    <br><a href="https://idlecoll.yayayayaya.xyz"><img src="web/public/qrcode.png" alt="IdleColl QR Code" width="140" /></a>
 4. **手機錢包瀏覽方式**：
    - 開啟 **MetaMask App** ➔ 點擊底部「瀏覽器」圖示 ➔ 輸入網址即可直接遊玩。
