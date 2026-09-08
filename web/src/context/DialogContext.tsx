@@ -1,5 +1,13 @@
-import React, { createContext, useContext, useState, useCallback, useEffect, ReactNode } from "react";
-import { CheckCircle2, AlertTriangle, XCircle, Info, X } from "lucide-react";
+import React, {
+  createContext,
+  useContext,
+  useState,
+  useCallback,
+  useEffect,
+  ReactNode,
+} from "react";
+import { createPortal } from "react-dom";
+import { CheckCircle2, AlertTriangle, XCircle, Info, X, ShieldAlert } from "lucide-react";
 
 export type DialogType = "info" | "success" | "warning" | "error";
 
@@ -34,6 +42,11 @@ const DialogContext = createContext<DialogContextType | null>(null);
 
 export const DialogProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [currentDialog, setCurrentDialog] = useState<DialogOptions | null>(null);
+  const [mounted, setMounted] = useState<boolean>(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const closeDialog = useCallback(() => {
     setCurrentDialog(null);
@@ -45,14 +58,14 @@ export const DialogProvider: React.FC<{ children: ReactNode }> = ({ children }) 
         title: "艦隊系統通訊",
         message: options,
         type: "info",
-        confirmText: "了解",
+        confirmText: "確認",
       });
     } else {
       setCurrentDialog({
         title: options.title || "艦隊系統通訊",
         message: options.message,
         type: options.type || "info",
-        confirmText: options.confirmText || "確定",
+        confirmText: options.confirmText || "確認",
         cancelText: options.cancelText,
         onConfirm: options.onConfirm,
         onCancel: options.onCancel,
@@ -155,45 +168,157 @@ export const DialogProvider: React.FC<{ children: ReactNode }> = ({ children }) 
     switch (type) {
       case "success":
         return {
-          border: "border-emerald-500/80 shadow-[0_0_30px_rgba(16,185,129,0.3)]",
-          iconBg: "bg-emerald-950/80 border-emerald-500/60 text-emerald-400",
-          icon: <CheckCircle2 className="w-5 h-5 text-emerald-400 drop-shadow-[0_0_8px_rgba(16,185,129,0.8)]" />,
+          border: "border-emerald-500/70 shadow-[0_0_40px_rgba(16,185,129,0.25)]",
+          iconBg: "bg-emerald-950/80 border-emerald-500/50 text-emerald-400",
+          icon: <CheckCircle2 className="w-5 h-5 sm:w-6 sm:h-6 text-emerald-400 drop-shadow-[0_0_10px_rgba(16,185,129,0.8)]" />,
           button:
-            "bg-emerald-500 hover:bg-emerald-400 text-black shadow-[0_0_15px_rgba(16,185,129,0.4)]",
+            "bg-gradient-to-r from-emerald-400 to-teal-500 hover:from-emerald-300 hover:to-teal-400 text-black shadow-[0_0_18px_rgba(16,185,129,0.4)]",
           tagText: "text-emerald-400",
+          dotColor: "bg-emerald-400",
+          accentGlow: "from-transparent via-emerald-400 to-transparent shadow-[0_0_12px_#10b981]",
         };
       case "warning":
         return {
-          border: "border-amber-500/80 shadow-[0_0_30px_rgba(245,158,11,0.3)]",
-          iconBg: "bg-amber-950/80 border-amber-500/60 text-amber-400",
-          icon: <AlertTriangle className="w-5 h-5 text-amber-400 drop-shadow-[0_0_8px_rgba(245,158,11,0.8)]" />,
+          border: "border-amber-500/70 shadow-[0_0_40px_rgba(245,158,11,0.25)]",
+          iconBg: "bg-amber-950/80 border-amber-500/50 text-amber-400",
+          icon: <AlertTriangle className="w-5 h-5 sm:w-6 sm:h-6 text-amber-400 drop-shadow-[0_0_10px_rgba(245,158,11,0.8)]" />,
           button:
-            "bg-amber-500 hover:bg-amber-400 text-black shadow-[0_0_15px_rgba(245,158,11,0.4)]",
+            "bg-gradient-to-r from-amber-400 via-amber-500 to-yellow-500 hover:from-amber-300 hover:to-yellow-400 text-black shadow-[0_0_18px_rgba(245,158,11,0.4)]",
           tagText: "text-amber-400",
+          dotColor: "bg-amber-400",
+          accentGlow: "from-transparent via-amber-400 to-transparent shadow-[0_0_12px_#f59e0b]",
         };
       case "error":
         return {
-          border: "border-rose-500/80 shadow-[0_0_30px_rgba(244,63,94,0.3)]",
-          iconBg: "bg-rose-950/80 border-rose-500/60 text-rose-400",
-          icon: <XCircle className="w-5 h-5 text-rose-400 drop-shadow-[0_0_8px_rgba(244,63,94,0.8)]" />,
+          border: "border-rose-500/70 shadow-[0_0_40px_rgba(244,63,94,0.25)]",
+          iconBg: "bg-rose-950/80 border-rose-500/50 text-rose-400",
+          icon: <XCircle className="w-5 h-5 sm:w-6 sm:h-6 text-rose-400 drop-shadow-[0_0_10px_rgba(244,63,94,0.8)]" />,
           button:
-            "bg-rose-500 hover:bg-rose-400 text-white shadow-[0_0_15px_rgba(244,63,94,0.4)]",
+            "bg-gradient-to-r from-rose-500 to-red-600 hover:from-rose-400 hover:to-red-500 text-white shadow-[0_0_18px_rgba(244,63,94,0.4)]",
           tagText: "text-rose-400",
+          dotColor: "bg-rose-400",
+          accentGlow: "from-transparent via-rose-500 to-transparent shadow-[0_0_12px_#f43f5e]",
         };
       case "info":
       default:
         return {
-          border: "border-neon-cyan/80 shadow-[0_0_30px_rgba(0,240,255,0.3)]",
-          iconBg: "bg-cyan-950/80 border-cyan-500/60 text-neon-cyan",
-          icon: <Info className="w-5 h-5 text-neon-cyan drop-shadow-[0_0_8px_rgba(0,240,255,0.8)]" />,
+          border: "border-neon-cyan/70 shadow-[0_0_40px_rgba(0,240,255,0.25)]",
+          iconBg: "bg-cyan-950/80 border-cyan-500/50 text-neon-cyan",
+          icon: <Info className="w-5 h-5 sm:w-6 sm:h-6 text-neon-cyan drop-shadow-[0_0_10px_rgba(0,240,255,0.8)]" />,
           button:
-            "bg-gradient-to-r from-neon-cyan to-blue-500 hover:from-cyan-400 hover:to-blue-400 text-black shadow-[0_0_15px_rgba(0,240,255,0.4)]",
+            "bg-gradient-to-r from-neon-cyan via-cyan-400 to-blue-500 hover:from-cyan-300 hover:to-blue-400 text-black shadow-[0_0_18px_rgba(0,240,255,0.4)]",
           tagText: "text-neon-cyan",
+          dotColor: "bg-neon-cyan",
+          accentGlow: "from-transparent via-cyan-400 to-transparent shadow-[0_0_12px_#00f0ff]",
         };
     }
   };
 
   const currentStyle = currentDialog ? getStyleByType(currentDialog.type) : null;
+
+  const handleBackdropClick = (e: React.MouseEvent) => {
+    if (e.target === e.currentTarget && currentDialog) {
+      if (currentDialog.onCancel) {
+        currentDialog.onCancel();
+      }
+      closeDialog();
+    }
+  };
+
+  const handleCancelClick = () => {
+    if (currentDialog?.onCancel) {
+      currentDialog.onCancel();
+    }
+    closeDialog();
+  };
+
+  const handleConfirmClick = () => {
+    if (currentDialog?.onConfirm) {
+      currentDialog.onConfirm();
+    }
+    closeDialog();
+  };
+
+  const dialogModal =
+    mounted && currentDialog && currentStyle ? (
+      <div
+        className="fixed inset-0 z-[10000] flex items-center justify-center p-4 sm:p-6 overflow-y-auto bg-black/85 backdrop-blur-md animate-in fade-in duration-200"
+        onClick={handleBackdropClick}
+      >
+        <div
+          className={`relative w-full max-w-sm sm:max-w-md rounded-2xl bg-space-900/95 border-2 ${currentStyle.border} p-5 sm:p-6 space-y-4 shadow-2xl backdrop-blur-xl animate-in zoom-in-95 duration-200 overflow-hidden`}
+        >
+          {/* Top ambient glowing accent line */}
+          <div
+            className={`absolute top-0 left-1/4 right-1/4 h-[2px] bg-gradient-to-r ${currentStyle.accentGlow}`}
+          />
+
+          {/* Top decorative header */}
+          <div className="flex items-center justify-between border-b border-space-800 pb-2.5">
+            <div className="flex items-center gap-2">
+              <span className={`w-2 h-2 rounded-full ${currentStyle.dotColor} shadow-[0_0_8px_currentColor]`} />
+              <span
+                className={`text-[10px] sm:text-[11px] font-mono tracking-wider uppercase font-bold ${currentStyle.tagText}`}
+              >
+                ◆ 0G PROTOCOL // {currentDialog.type?.toUpperCase() || "SYS"}
+              </span>
+            </div>
+            <button
+              onClick={handleCancelClick}
+              className="p-1.5 rounded-lg bg-space-850 hover:bg-space-800 border border-space-700/60 hover:border-space-600 text-gray-400 hover:text-white transition-all active:scale-95"
+              title="關閉"
+            >
+              <X className="w-3.5 h-3.5" />
+            </button>
+          </div>
+
+          {/* Content section */}
+          <div className="flex items-start gap-3.5 pt-1">
+            <div
+              className={`w-11 h-11 sm:w-12 sm:h-12 rounded-xl border flex items-center justify-center shrink-0 shadow-lg ${currentStyle.iconBg}`}
+            >
+              {currentStyle.icon}
+            </div>
+
+            <div className="space-y-1.5 text-left flex-1 min-w-0">
+              <h3 className="text-sm sm:text-base font-bold font-mono text-gray-100 tracking-wide">
+                {currentDialog.title}
+              </h3>
+              <div className="rounded-xl bg-space-950/70 border border-space-800/80 p-3 sm:p-3.5 text-xs sm:text-sm text-gray-300 font-mono leading-relaxed whitespace-pre-wrap break-words">
+                {currentDialog.message}
+              </div>
+            </div>
+          </div>
+
+          {/* Action buttons */}
+          <div className="pt-2">
+            {currentDialog.cancelText ? (
+              <div className="grid grid-cols-2 gap-2.5 sm:gap-3">
+                <button
+                  onClick={handleCancelClick}
+                  className="w-full py-2.5 px-4 rounded-xl bg-space-850 hover:bg-space-800 border border-space-700 hover:border-space-600 text-gray-300 hover:text-white text-xs sm:text-sm font-mono font-bold active:scale-95 transition-all cursor-pointer"
+                >
+                  {currentDialog.cancelText}
+                </button>
+                <button
+                  onClick={handleConfirmClick}
+                  className={`w-full py-2.5 px-4 rounded-xl font-mono font-bold text-xs sm:text-sm active:scale-95 transition-all cursor-pointer ${currentStyle.button}`}
+                >
+                  {currentDialog.confirmText || "確認"}
+                </button>
+              </div>
+            ) : (
+              <button
+                onClick={handleConfirmClick}
+                className={`w-full py-2.5 sm:py-3 px-5 rounded-xl font-mono font-bold text-xs sm:text-sm active:scale-95 transition-all cursor-pointer ${currentStyle.button}`}
+              >
+                {currentDialog.confirmText || "確定"}
+              </button>
+            )}
+          </div>
+        </div>
+      </div>
+    ) : null;
 
   return (
     <DialogContext.Provider
@@ -208,74 +333,7 @@ export const DialogProvider: React.FC<{ children: ReactNode }> = ({ children }) 
       }}
     >
       {children}
-
-      {/* Sci-Fi Game Modal Dialog */}
-      {currentDialog && currentStyle && (
-        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
-          <div
-            className={`relative w-full max-w-sm rounded-2xl bg-space-900 border-2 ${currentStyle.border} p-5 space-y-4 shadow-2xl animate-in zoom-in-95 duration-150`}
-          >
-            {/* Top decorative header */}
-            <div className="flex items-center justify-between border-b border-space-800 pb-2">
-              <span className={`text-[10px] font-mono tracking-wider uppercase font-bold ${currentStyle.tagText}`}>
-                ◆ 0G PROTOCOL // {currentDialog.type?.toUpperCase() || "SYS"}
-              </span>
-              <button
-                onClick={() => {
-                  if (currentDialog.onCancel) currentDialog.onCancel();
-                  closeDialog();
-                }}
-                className="p-1 rounded-md bg-space-850 hover:bg-space-800 text-gray-400 hover:text-white transition-colors"
-              >
-                <X className="w-3.5 h-3.5" />
-              </button>
-            </div>
-
-            {/* Content row */}
-            <div className="flex items-start gap-3">
-              <div
-                className={`w-10 h-10 rounded-xl border flex items-center justify-center shrink-0 ${currentStyle.iconBg}`}
-              >
-                {currentStyle.icon}
-              </div>
-
-              <div className="space-y-1 text-left flex-1 min-w-0">
-                <h3 className="text-sm font-bold font-mono text-gray-100 tracking-wide">
-                  {currentDialog.title}
-                </h3>
-                <p className="text-xs text-gray-300 font-mono leading-relaxed whitespace-pre-wrap break-words">
-                  {currentDialog.message}
-                </p>
-              </div>
-            </div>
-
-            {/* Action buttons */}
-            <div className="pt-2 flex items-center justify-end gap-2">
-              {currentDialog.cancelText && (
-                <button
-                  onClick={() => {
-                    if (currentDialog.onCancel) currentDialog.onCancel();
-                    closeDialog();
-                  }}
-                  className="px-4 py-2 rounded-xl bg-space-850 hover:bg-space-800 border border-space-700 text-gray-300 text-xs font-mono font-bold active:scale-95 transition-all"
-                >
-                  {currentDialog.cancelText}
-                </button>
-              )}
-
-              <button
-                onClick={() => {
-                  if (currentDialog.onConfirm) currentDialog.onConfirm();
-                  closeDialog();
-                }}
-                className={`px-5 py-2 rounded-xl font-mono font-bold text-xs active:scale-95 transition-all ${currentStyle.button}`}
-              >
-                {currentDialog.confirmText || "確定"}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      {dialogModal && createPortal(dialogModal, document.body)}
     </DialogContext.Provider>
   );
 };

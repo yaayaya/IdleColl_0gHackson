@@ -13,3 +13,4 @@ contracts/typechain-types
 contracts/cache
 contracts/artifacts
 data/
+.playwright-cli/

@@ -1,5 +1,18 @@
 import React, { useState, useEffect } from "react";
-import { Smartphone, Monitor, ExternalLink, Copy, Check, Wallet, X, Zap } from "lucide-react";
+import { createPortal } from "react-dom";
+import {
+  Smartphone,
+  Monitor,
+  ExternalLink,
+  Copy,
+  Check,
+  Wallet,
+  X,
+  Zap,
+  ShieldCheck,
+  Globe,
+  Radio,
+} from "lucide-react";
 
 interface ConnectWalletModalProps {
   isOpen: boolean;
@@ -12,9 +25,14 @@ export const ConnectWalletModal: React.FC<ConnectWalletModalProps> = ({
   onClose,
   onConnectMetaMask,
 }) => {
+  const [mounted, setMounted] = useState<boolean>(false);
   const [isMobile, setIsMobile] = useState<boolean>(false);
   const [hasInjectedProvider, setHasInjectedProvider] = useState<boolean>(false);
   const [copied, setCopied] = useState<boolean>(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   useEffect(() => {
     if (typeof navigator !== "undefined") {
@@ -22,14 +40,36 @@ export const ConnectWalletModal: React.FC<ConnectWalletModalProps> = ({
       setIsMobile(mobileCheck);
     }
     if (typeof window !== "undefined") {
-      setHasInjectedProvider(Boolean((window as any).ethereum));
+      const eth = (window as any).ethereum;
+      const hasRealExtension = Boolean(
+        eth && eth.isMetaMask && !eth._log
+      );
+      setHasInjectedProvider(hasRealExtension);
     }
   }, [isOpen]);
 
-  if (!isOpen) return null;
+  // Handle escape key
+  useEffect(() => {
+    if (!isOpen) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        onClose();
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [isOpen, onClose]);
 
-  const currentUrl = typeof window !== "undefined" ? window.location.href : "https://idlecoll.yayayayaya.xyz";
-  const host = typeof window !== "undefined" ? window.location.host : "idlecoll.yayayayaya.xyz";
+  if (!isOpen || !mounted) return null;
+
+  const currentUrl =
+    typeof window !== "undefined"
+      ? window.location.href
+      : "https://idlecoll.yayayayaya.xyz";
+  const host =
+    typeof window !== "undefined"
+      ? window.location.host
+      : "idlecoll.yayayayaya.xyz";
   const metaMaskDeepLink = `https://metamask.app.link/dapp/${host}`;
 
   const handleCopy = () => {
@@ -37,7 +77,7 @@ export const ConnectWalletModal: React.FC<ConnectWalletModalProps> = ({
       navigator.clipboard.writeText(currentUrl);
       setCopied(true);
       if (navigator.vibrate) navigator.vibrate([15]);
-      setTimeout(() => setCopied(false), 3000);
+      setTimeout(() => setCopied(false), 2500);
     }
   };
 
@@ -48,113 +88,186 @@ export const ConnectWalletModal: React.FC<ConnectWalletModalProps> = ({
     window.location.href = metaMaskDeepLink;
   };
 
-  return (
-    <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in duration-150">
-      <div className="relative w-full max-w-sm rounded-2xl bg-space-900 border-2 border-neon-cyan/80 p-5 space-y-4 shadow-[0_0_35px_rgba(0,240,255,0.3)] animate-in zoom-in-95 duration-150">
-        {/* Top header */}
-        <div className="flex items-center justify-between border-b border-space-800 pb-2.5">
-          <div className="flex items-center gap-2">
-            <Wallet className="w-4 h-4 text-neon-cyan" />
-            <h3 className="text-xs font-bold font-mono text-gray-100 uppercase tracking-wider">
-              連線 0G 星際艦隊
-            </h3>
+  const modalContent = (
+    <div
+      className="fixed inset-0 z-[10000] flex items-center justify-center p-4 sm:p-6 overflow-y-auto bg-black/85 backdrop-blur-md animate-in fade-in duration-200"
+      onClick={(e) => {
+        if (e.target === e.currentTarget) {
+          onClose();
+        }
+      }}
+    >
+      <div className="relative w-full max-w-sm sm:max-w-md rounded-2xl bg-space-900/95 border border-cyan-500/50 p-5 sm:p-6 space-y-4 shadow-[0_0_50px_rgba(0,240,255,0.25)] backdrop-blur-xl animate-in zoom-in-95 duration-200">
+        {/* Top ambient glowing cyber line */}
+        <div className="absolute top-0 left-1/4 right-1/4 h-[2px] bg-gradient-to-r from-transparent via-cyan-400 to-transparent shadow-[0_0_12px_#00f0ff]" />
+
+        {/* Top Header */}
+        <div className="flex items-center justify-between border-b border-space-800 pb-3">
+          <div className="flex items-center gap-2.5">
+            <div className="w-8 h-8 rounded-xl bg-cyan-950/80 border border-cyan-500/40 flex items-center justify-center text-neon-cyan shadow-[0_0_12px_rgba(0,240,255,0.35)]">
+              <Wallet className="w-4 h-4" />
+            </div>
+            <div>
+              <h3 className="text-sm font-bold font-mono text-gray-100 uppercase tracking-wider flex items-center gap-1.5">
+                <span>連線 0G 星際艦隊</span>
+              </h3>
+              <p className="text-[10px] text-cyan-400/80 font-mono tracking-wider uppercase">
+                WALLET AUTHENTICATION PROTOCOL
+              </p>
+            </div>
           </div>
           <button
             onClick={onClose}
-            className="p-1 rounded-md bg-space-850 hover:bg-space-800 text-gray-400 hover:text-white transition-colors"
+            className="p-1.5 rounded-lg bg-space-850 hover:bg-space-800 border border-space-700/60 hover:border-space-600 text-gray-400 hover:text-white transition-all active:scale-95"
+            title="關閉視窗"
           >
-            <X className="w-3.5 h-3.5" />
+            <X className="w-4 h-4" />
           </button>
         </div>
 
-        {/* Device Detection Badge */}
-        <div className="flex items-center justify-between px-3 py-1.5 rounded-lg bg-space-850 border border-space-800 text-[11px] font-mono">
+        {/* Device & Protocol Status Badge */}
+        <div className="flex items-center justify-between px-3.5 py-2 rounded-xl bg-space-950/80 border border-space-800 text-[11px] font-mono">
           <div className="flex items-center gap-1.5 text-gray-300">
-            {isMobile ? <Smartphone className="w-3.5 h-3.5 text-cyan-400" /> : <Monitor className="w-3.5 h-3.5 text-purple-400" />}
-            <span>當前環境：{isMobile ? "手機端 (Mobile)" : "電腦端 (Desktop)"}</span>
+            {isMobile ? (
+              <Smartphone className="w-3.5 h-3.5 text-cyan-400" />
+            ) : (
+              <Monitor className="w-3.5 h-3.5 text-purple-400" />
+            )}
+            <span>{isMobile ? "行動裝置 (Mobile)" : "電腦終端 (Desktop)"}</span>
           </div>
-          <span className={`text-[10px] font-bold ${hasInjectedProvider ? "text-emerald-400" : "text-amber-400"}`}>
-            {hasInjectedProvider ? "● MetaMask 已偵測" : "○ 未掛載擴充"}
-          </span>
+          <div className="flex items-center gap-1.5">
+            <span
+              className={`w-2 h-2 rounded-full ${
+                hasInjectedProvider
+                  ? "bg-emerald-400 shadow-[0_0_6px_#34d399]"
+                  : "bg-cyan-400 shadow-[0_0_6px_#22d3ee]"
+              }`}
+            />
+            <span
+              className={`text-[10px] font-bold ${
+                hasInjectedProvider ? "text-emerald-400" : "text-cyan-400"
+              }`}
+            >
+              {hasInjectedProvider ? "MetaMask 已就緒" : "SDK 通訊就緒"}
+            </span>
+          </div>
         </div>
 
-        {/* Dynamic content depending on environment */}
+        {/* Dynamic Context Actions */}
         <div className="space-y-3 pt-1">
           {hasInjectedProvider ? (
-            /* Case 1: Has MetaMask Injected (e.g. MetaMask browser on phone or Chrome on desktop) */
+            /* Case 1: Injected Provider Detected (e.g. Chrome Extension or In-App Browser) */
             <div className="space-y-3">
-              <p className="text-xs text-gray-300 font-mono leading-relaxed">
-                系統已偵測到你的 MetaMask 錢包，點擊下方即可安全授權登入並自動切換至 <strong>0G Galileo 測試網</strong>。
-              </p>
+              <div className="p-3 rounded-xl bg-cyan-950/40 border border-cyan-500/30 text-gray-300 text-xs font-mono leading-relaxed">
+                系統已偵測到您的 MetaMask 錢包，點擊下方即可安全授權登入並自動切換至{" "}
+                <strong className="text-cyan-300">0G Galileo 測試網</strong>。
+              </div>
 
               <button
                 onClick={() => {
                   onConnectMetaMask();
                   onClose();
                 }}
-                className="w-full py-3 rounded-xl bg-gradient-to-r from-neon-cyan via-cyan-400 to-blue-500 hover:from-cyan-300 hover:to-blue-400 text-black font-mono font-bold text-xs shadow-[0_0_16px_rgba(0,240,255,0.4)] active:scale-95 flex items-center justify-center gap-2 transition-all"
+                className="w-full py-3 rounded-xl bg-gradient-to-r from-neon-cyan via-cyan-400 to-blue-500 hover:from-cyan-300 hover:to-blue-400 text-black font-mono font-bold text-xs shadow-[0_0_20px_rgba(0,240,255,0.45)] active:scale-95 flex items-center justify-center gap-2 transition-all cursor-pointer"
               >
-                <Wallet className="w-4 h-4" />
+                <Wallet className="w-4 h-4 text-black" />
                 <span>立即連線 MetaMask 錢包</span>
               </button>
             </div>
           ) : isMobile ? (
-            /* Case 2: Mobile Safari / Mobile Chrome with MetaMask SDK */
-            <div className="space-y-3">
-              <div className="p-3 rounded-xl bg-cyan-950/60 border border-cyan-500/50 text-cyan-200 text-[11px] font-mono leading-relaxed">
-                已啟用 <strong>MetaMask SDK</strong>！您可直接點擊下方按鈕自動喚醒手機上的 MetaMask App 進行授權連線。
+            /* Case 2: Mobile Safari / Mobile Chrome */
+            <div className="space-y-2.5">
+              <div className="p-3 rounded-xl bg-cyan-950/40 border border-cyan-500/30 text-gray-300 text-xs font-mono leading-relaxed space-y-1">
+                <div className="flex items-center gap-1.5 text-cyan-300 font-bold">
+                  <Radio className="w-3.5 h-3.5 animate-pulse" />
+                  <span>MetaMask SDK 跨端通訊協定</span>
+                </div>
+                <p className="text-[11px] text-gray-300">
+                  可直接喚醒手機端 MetaMask App 授權，或透過內建專用瀏覽器體驗最流暢的 Web3 交互。
+                </p>
               </div>
 
-              {/* Action 1: Connect via MetaMask SDK */}
+              {/* Primary Action: Direct SDK Wakeup */}
               <button
                 onClick={() => {
                   onConnectMetaMask();
                   onClose();
                 }}
-                className="w-full py-3 rounded-xl bg-gradient-to-r from-neon-cyan via-cyan-400 to-blue-500 hover:from-cyan-300 hover:to-blue-400 text-black font-mono font-bold text-xs shadow-[0_0_16px_rgba(0,240,255,0.4)] active:scale-95 flex items-center justify-center gap-2 transition-all"
+                className="w-full py-3 rounded-xl bg-gradient-to-r from-neon-cyan via-cyan-400 to-blue-500 hover:from-cyan-300 hover:to-blue-400 text-black font-mono font-bold text-xs shadow-[0_0_20px_rgba(0,240,255,0.45)] active:scale-95 flex items-center justify-center gap-2 transition-all cursor-pointer"
               >
-                <Wallet className="w-4 h-4" />
-                <span>🚀 喚醒 MetaMask App 連線</span>
+                <Wallet className="w-4 h-4 text-black" />
+                <span>🚀 喚醒手機 MetaMask App 連線</span>
               </button>
 
-              {/* Action 2: Direct Open in MetaMask In-App Browser */}
+              {/* Secondary Action: Open in MetaMask App Browser */}
               <button
                 onClick={handleOpenMetaMaskApp}
-                className="w-full py-2.5 rounded-xl bg-space-850 hover:bg-space-800 border border-space-700 text-amber-300 font-mono text-xs font-semibold flex items-center justify-center gap-2 transition-all active:scale-95"
+                className="w-full py-2.5 rounded-xl bg-space-850 hover:bg-space-800 border border-space-700 hover:border-cyan-500/40 text-cyan-300 font-mono text-xs font-semibold flex items-center justify-center gap-2 transition-all active:scale-95 cursor-pointer"
               >
-                <Zap className="w-3.5 h-3.5 text-amber-400" />
+                <Globe className="w-3.5 h-3.5 text-cyan-400" />
                 <span>在 MetaMask 內建瀏覽器中開啟</span>
               </button>
 
-              {/* Action 3: Copy Link */}
+              {/* Tertiary Action: Copy Game Link */}
               <button
                 onClick={handleCopy}
-                className="w-full py-2 rounded-xl bg-space-900 hover:bg-space-850 border border-space-800 text-gray-400 hover:text-gray-200 font-mono text-[11px] flex items-center justify-center gap-1.5 transition-all active:scale-95"
+                className="w-full py-2 rounded-xl bg-space-950/60 hover:bg-space-850 border border-space-800 text-gray-400 hover:text-gray-200 font-mono text-[11px] flex items-center justify-center gap-1.5 transition-all active:scale-95 cursor-pointer"
               >
-                {copied ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5 text-gray-500" />}
-                <span>{copied ? "已複製遊戲網址！" : "複製遊戲網址"}</span>
+                {copied ? (
+                  <Check className="w-3.5 h-3.5 text-emerald-400" />
+                ) : (
+                  <Copy className="w-3.5 h-3.5 text-gray-500" />
+                )}
+                <span>{copied ? "已複製遊戲專屬網址！" : "複製遊戲網址 (前往 MetaMask 開啟)"}</span>
               </button>
             </div>
           ) : (
-            /* Case 3: Desktop Browser without MetaMask extension */
+            /* Case 3: Desktop Browser without injected provider */
             <div className="space-y-3">
-              <p className="text-xs text-gray-300 font-mono leading-relaxed">
-                電腦瀏覽器尚未安裝 MetaMask 擴充套件。安裝後即可連線 0G Galileo 區塊鏈並交易 NFT 藏品。
-              </p>
+              <div className="p-3 rounded-xl bg-cyan-950/40 border border-cyan-500/30 text-gray-300 text-xs font-mono leading-relaxed space-y-1">
+                <div className="flex items-center gap-1.5 text-cyan-300 font-bold">
+                  <Radio className="w-3.5 h-3.5" />
+                  <span>多模式連線支援</span>
+                </div>
+                <p className="text-[11px] text-gray-300">
+                  支援手機 MetaMask App 掃描 QR 碼連線，或安裝瀏覽器擴充套件直接授權。
+                </p>
+              </div>
 
+              {/* Primary: Connect via SDK (shows QR code or auto-detects) */}
+              <button
+                onClick={() => {
+                  onConnectMetaMask();
+                  onClose();
+                }}
+                className="w-full py-3 rounded-xl bg-gradient-to-r from-neon-cyan via-cyan-400 to-blue-500 hover:from-cyan-300 hover:to-blue-400 text-black font-mono font-bold text-xs shadow-[0_0_20px_rgba(0,240,255,0.45)] active:scale-95 flex items-center justify-center gap-2 transition-all cursor-pointer"
+              >
+                <Wallet className="w-4 h-4 text-black" />
+                <span>🚀 啟動連線 (支援手機掃碼 / SDK)</span>
+              </button>
+
+              {/* Secondary: Install MetaMask Extension (Cyberpunk glass style - NO ugly orange) */}
               <a
                 href="https://metamask.io/download/"
                 target="_blank"
                 rel="noreferrer"
-                className="w-full py-3 rounded-xl bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-400 hover:to-amber-400 text-black font-mono font-bold text-xs shadow-[0_0_16px_rgba(245,158,11,0.4)] active:scale-95 flex items-center justify-center gap-2 transition-all"
+                className="w-full py-2.5 rounded-xl bg-space-850 hover:bg-space-800 border border-cyan-500/30 hover:border-cyan-400 text-cyan-300 hover:text-cyan-200 font-mono text-xs font-semibold flex items-center justify-center gap-2 transition-all active:scale-95"
               >
-                <ExternalLink className="w-4 h-4" />
+                <ExternalLink className="w-3.5 h-3.5 text-cyan-400" />
                 <span>安裝 MetaMask 瀏覽器擴充套件</span>
               </a>
             </div>
           )}
         </div>
+
+        {/* Security & Network Footnote */}
+        <div className="pt-2 border-t border-space-800/80 flex items-center justify-center gap-1.5 text-[10px] text-gray-400 font-mono">
+          <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
+          <span>0G Galileo 測試網端點加密連線 · 無需揭露私鑰</span>
+        </div>
       </div>
     </div>
   );
+
+  return createPortal(modalContent, document.body);
 };

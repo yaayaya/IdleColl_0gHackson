@@ -29,7 +29,12 @@ export const Navbar: React.FC<NavbarProps> = ({
   const { showConfirm } = useDialog();
 
   const handleConnectClick = () => {
-    if (typeof window !== "undefined" && (window as any).ethereum) {
+    const eth = typeof window !== "undefined" ? (window as any).ethereum : null;
+    const hasAuthenticExtension = Boolean(
+      eth && eth.isMetaMask && !eth._log
+    );
+
+    if (hasAuthenticExtension) {
       connectWallet();
     } else {
       setIsModalOpen(true);
