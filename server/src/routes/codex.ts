@@ -1,7 +1,7 @@
 import { FastifyInstance } from "fastify";
 import { db } from "../db/index.js";
 import { itemArchetypes, collectibles } from "../db/schema.js";
-import { eq, desc } from "drizzle-orm";
+import { eq, desc, and } from "drizzle-orm";
 
 export async function codexRoutes(app: FastifyInstance) {
   app.get("/api/codex", async (req, reply) => {
@@ -17,9 +17,12 @@ export async function codexRoutes(app: FastifyInstance) {
       orderBy: (items, { asc }) => [asc(items.id)],
     });
 
-    // 2. Fetch player's owned collectibles
+    // 2. Fetch player's owned collectibles (only revealed / minted items)
     const playerItems = await db.query.collectibles.findMany({
-      where: eq(collectibles.ownerAddress, cleanAddress),
+      where: and(
+        eq(collectibles.ownerAddress, cleanAddress),
+        eq(collectibles.mintStatus, "minted")
+      ),
       orderBy: [desc(collectibles.createdAt)],
     });
 

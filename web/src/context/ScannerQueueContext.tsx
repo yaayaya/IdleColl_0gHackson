@@ -7,7 +7,7 @@ import React, {
   ReactNode,
 } from "react";
 import { createPortal } from "react-dom";
-import { Sparkles, X, ExternalLink, Check, Eye, Compass } from "lucide-react";
+import { Sparkles, X } from "lucide-react";
 
 export interface GachaJob {
   id: number;
@@ -58,7 +58,9 @@ export interface RevealItemData {
 }
 
 interface ScannerQueueContextType {
+  jobs: GachaJob[];
   activeJobs: GachaJob[];
+  unrevealedJobs: GachaJob[];
   enqueueScan: () => Promise<{ success: boolean; error?: string }>;
   revealedItem: RevealItemData | null;
   setRevealedItem: (item: RevealItemData | null) => void;
@@ -77,7 +79,6 @@ export const ScannerQueueProvider: React.FC<{
 }> = ({ children, address, tickets, onTicketsChange, onCollectiblesUpdated }) => {
   const [jobs, setJobs] = useState<GachaJob[]>([]);
   const [revealedItem, setRevealedItem] = useState<RevealItemData | null>(null);
-  const [completedToast, setCompletedToast] = useState<GachaJob | null>(null);
 
   // Fetch jobs from server
   const refreshJobs = useCallback(async () => {
@@ -90,26 +91,11 @@ export const ScannerQueueProvider: React.FC<{
       const data = await res.json();
       if (res.ok && data.jobs) {
         setJobs(data.jobs);
-
-        // Check if there are newly completed jobs that have not been acknowledged
-        const unackedCompleted = data.jobs.find(
-          (j: GachaJob) => j.status === "completed" && j.acknowledged === 0 && j.collectible
-        );
-
-        if (unackedCompleted && (!completedToast || completedToast.id !== unackedCompleted.id)) {
-          setCompletedToast(unackedCompleted);
-          if (typeof navigator !== "undefined" && navigator.vibrate) {
-            navigator.vibrate([30, 60, 40]);
-          }
-          if (onCollectiblesUpdated) {
-            onCollectiblesUpdated();
-          }
-        }
       }
     } catch (err) {
       console.error("[ScannerQueue] Failed to fetch jobs:", err);
     }
-  }, [address, completedToast, onCollectiblesUpdated]);
+  }, [address]);
 
   // Polling while jobs are active
   useEffect(() => {
@@ -168,9 +154,8 @@ export const ScannerQueueProvider: React.FC<{
         archetype: job.archetype,
         collectible: job.collectible,
       });
-      setCompletedToast(null);
 
-      // Acknowledge on server
+      // Acknowledge on server and convert mintStatus to "minted"
       if (address) {
         try {
           await fetch("/api/gacha/ack", {
@@ -178,13 +163,16 @@ export const ScannerQueueProvider: React.FC<{
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ address, jobId: job.id }),
           });
-          refreshJobs();
+          await refreshJobs();
+          if (onCollectiblesUpdated) {
+            onCollectiblesUpdated();
+          }
         } catch (e) {
           console.error("Failed to ack job:", e);
         }
       }
     },
-    [address, refreshJobs]
+    [address, refreshJobs, onCollectiblesUpdated]
   );
 
   const getRarityBadge = (rarity: string) => {
@@ -201,11 +189,16 @@ export const ScannerQueueProvider: React.FC<{
   };
 
   const activeJobs = jobs.filter((j) => j.status === "queued" || j.status === "processing");
+  const unrevealedJobs = jobs.filter(
+    (j) => j.status === "completed" && j.acknowledged === 0 && j.collectible && j.archetype
+  );
 
   return (
     <ScannerQueueContext.Provider
       value={{
+        jobs,
         activeJobs,
+        unrevealedJobs,
         enqueueScan,
         revealedItem,
         setRevealedItem,
@@ -214,55 +207,6 @@ export const ScannerQueueProvider: React.FC<{
       }}
     >
       {children}
-
-      {/* Floating Global Completion Toast / Notification Bar */}
-      {completedToast &&
-        completedToast.collectible &&
-        completedToast.archetype &&
-        typeof document !== "undefined" &&
-        createPortal(
-          <div className="fixed top-16 left-1/2 -translate-x-1/2 z-[9990] w-full max-w-sm px-4 animate-in slide-in-from-top-4 duration-300">
-            <div className="rounded-2xl bg-space-900/95 border-2 border-neon-cyan p-3.5 shadow-[0_0_30px_rgba(0,240,255,0.4)] backdrop-blur-xl flex items-center justify-between gap-3">
-              <div
-                className="flex items-center gap-3 flex-1 min-w-0 cursor-pointer"
-                onClick={() => openJobReveal(completedToast)}
-              >
-                <div className="w-10 h-10 rounded-xl bg-cyan-950/80 border border-cyan-500/50 flex items-center justify-center shrink-0 shadow-[0_0_10px_rgba(0,240,255,0.4)]">
-                  <Sparkles className="w-5 h-5 text-neon-cyan animate-pulse" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-1.5">
-                    <span className="text-[10px] font-mono text-emerald-400 font-bold uppercase tracking-wider">
-                      ● 探測任務完成！
-                    </span>
-                    <span
-                      className={`text-[9px] font-mono px-1.5 py-0.2 rounded border font-bold ${getRarityBadge(
-                        completedToast.archetype.rarity
-                      )}`}
-                    >
-                      {completedToast.archetype.rarity}
-                    </span>
-                  </div>
-                  <p className="text-xs font-bold font-mono text-gray-100 truncate">
-                    {completedToast.collectible.aiTitle}
-                  </p>
-                  <p className="text-[10px] font-mono text-cyan-400 flex items-center gap-1">
-                    <Eye className="w-3 h-3" />
-                    <span>點擊立即檢視立體全像</span>
-                  </p>
-                </div>
-              </div>
-              <button
-                onClick={() => setCompletedToast(null)}
-                className="p-1 rounded-lg bg-space-850 hover:bg-space-800 text-gray-400 hover:text-white"
-                title="關閉提示"
-              >
-                <X className="w-3.5 h-3.5" />
-              </button>
-            </div>
-          </div>,
-          document.body
-        )}
 
       {/* Global Holographic Reveal Modal */}
       {revealedItem &&

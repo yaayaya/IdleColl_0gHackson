@@ -144,6 +144,7 @@ export function App() {
                 }}
                 onConnectWallet={handleConnectClick}
                 onRename={handleRename}
+                onNavigateToScanner={() => handleTabChange("scanner")}
               />
             )}
 
@@ -177,53 +178,38 @@ export function App() {
 
           {/* Fixed Mobile Bottom Tab Bar */}
           <nav className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-md bg-space-950/95 backdrop-blur-md border-t border-space-800 px-3 py-2 pb-safe flex items-center justify-around z-40">
-            <button
-              onClick={() => handleTabChange("cockpit")}
-              className={`flex flex-col items-center gap-1 py-1 px-3 rounded-xl transition-all cursor-pointer ${
-                activeTab === "cockpit"
-                  ? "text-neon-cyan drop-shadow-[0_0_8px_rgba(0,240,255,0.6)] font-bold scale-105"
-                  : "text-gray-400 hover:text-gray-200"
-              }`}
-            >
-              <Pickaxe className="w-4 h-4" />
-              <span className="text-[10px] font-mono">採礦艙</span>
-            </button>
+            {[
+              { id: "cockpit", label: "採礦艙", icon: Pickaxe },
+              { id: "scanner", label: "深空探測", icon: Radar },
+              { id: "codex", label: "星際圖鑑", icon: BookOpen },
+              { id: "market", label: "0G 拍賣場", icon: ShoppingBag },
+            ].map((tab) => {
+              const Icon = tab.icon;
+              const isActive = activeTab === tab.id;
+              const isLocked = !address; // When not logged in, bottom bar cannot be clicked
 
-            <button
-              onClick={() => handleTabChange("scanner")}
-              className={`flex flex-col items-center gap-1 py-1 px-3 rounded-xl transition-all cursor-pointer ${
-                activeTab === "scanner"
-                  ? "text-neon-cyan drop-shadow-[0_0_8px_rgba(0,240,255,0.6)] font-bold scale-105"
-                  : "text-gray-400 hover:text-gray-200"
-              }`}
-            >
-              <Radar className="w-4 h-4" />
-              <span className="text-[10px] font-mono">深空探測</span>
-            </button>
-
-            <button
-              onClick={() => handleTabChange("codex")}
-              className={`flex flex-col items-center gap-1 py-1 px-3 rounded-xl transition-all cursor-pointer ${
-                activeTab === "codex"
-                  ? "text-neon-cyan drop-shadow-[0_0_8px_rgba(0,240,255,0.6)] font-bold scale-105"
-                  : "text-gray-400 hover:text-gray-200"
-              }`}
-            >
-              <BookOpen className="w-4 h-4" />
-              <span className="text-[10px] font-mono">星際圖鑑</span>
-            </button>
-
-            <button
-              onClick={() => handleTabChange("market")}
-              className={`flex flex-col items-center gap-1 py-1 px-3 rounded-xl transition-all cursor-pointer ${
-                activeTab === "market"
-                  ? "text-neon-cyan drop-shadow-[0_0_8px_rgba(0,240,255,0.6)] font-bold scale-105"
-                  : "text-gray-400 hover:text-gray-200"
-              }`}
-            >
-              <ShoppingBag className="w-4 h-4" />
-              <span className="text-[10px] font-mono">0G 拍賣場</span>
-            </button>
+              return (
+                <button
+                  key={tab.id}
+                  onClick={() => {
+                    if (isLocked) return;
+                    handleTabChange(tab.id as TabType);
+                  }}
+                  disabled={isLocked}
+                  className={`flex flex-col items-center gap-1 py-1 px-3 rounded-xl transition-all ${
+                    isLocked
+                      ? "opacity-30 cursor-not-allowed select-none"
+                      : isActive
+                      ? "text-neon-cyan drop-shadow-[0_0_8px_rgba(0,240,255,0.6)] font-bold scale-105 cursor-pointer"
+                      : "text-gray-400 hover:text-gray-200 cursor-pointer"
+                  }`}
+                  title={isLocked ? "請先連線錢包以啟用導航" : undefined}
+                >
+                  <Icon className="w-4 h-4" />
+                  <span className="text-[10px] font-mono">{tab.label}</span>
+                </button>
+              );
+            })}
           </nav>
 
           {/* Root Rename Modal */}

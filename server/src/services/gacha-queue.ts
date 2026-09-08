@@ -1,6 +1,6 @@
 import { db } from "../db/index.js";
 import { players, itemArchetypes, collectibles, gachaJobs } from "../db/schema.js";
-import { eq, and, desc, inArray } from "drizzle-orm";
+import { eq, and, desc, inArray, sql } from "drizzle-orm";
 import { generateAILoreAndStats } from "./zerog-ai.js";
 import { uploadTo0GStorage } from "./zerog-storage.js";
 import { mintNFTToPlayer } from "./chain-minter.js";
@@ -59,6 +59,18 @@ class GachaQueueService {
 
     if (player.tickets < 1) {
       throw new Error("No tickets left! Buy tickets using coins.");
+    }
+
+    // Check active queue limit (max 2 concurrent tasks)
+    const activeJobs = await db.query.gachaJobs.findMany({
+      where: and(
+        eq(gachaJobs.walletAddress, cleanAddress),
+        inArray(gachaJobs.status, ["queued", "processing"])
+      ),
+    });
+
+    if (activeJobs.length >= 2) {
+      throw new Error("探測佇列已達上限（同時最多進行 2 個任務），請等待當前探測完成！");
     }
 
     // 2. Atomically deduct 1 ticket
@@ -204,7 +216,7 @@ class GachaQueueService {
           aiStats: aiItem.stats,
           storageHash,
           txHash,
-          mintStatus: "minted",
+          mintStatus: "unrevealed",
         })
         .returning();
 
@@ -242,7 +254,7 @@ class GachaQueueService {
         await db
           .update(players)
           .set({
-            tickets: players.tickets, // or increment
+            tickets: sql`${players.tickets} + 1`,
           })
           .where(eq(players.walletAddress, cleanAddress));
       } catch (refundErr) {
@@ -259,7 +271,8 @@ class GachaQueueService {
     const jobs = await db.query.gachaJobs.findMany({
       where: and(
         eq(gachaJobs.walletAddress, cleanAddress),
-        inArray(gachaJobs.status, ["queued", "processing", "completed"])
+        inArray(gachaJobs.status, ["queued", "processing", "completed"]),
+        eq(gachaJobs.acknowledged, 0)
       ),
       orderBy: [desc(gachaJobs.id)],
       limit: 10,
@@ -291,13 +304,21 @@ class GachaQueueService {
   }
 
   /**
-   * Mark a completed job as acknowledged (viewed by user)
+   * Mark a completed job as acknowledged (viewed by user) and reveal collectible in codex
    */
   async acknowledge(jobId: number, cleanAddress: string) {
-    await db
+    const [job] = await db
       .update(gachaJobs)
       .set({ acknowledged: 1 })
-      .where(and(eq(gachaJobs.id, jobId), eq(gachaJobs.walletAddress, cleanAddress)));
+      .where(and(eq(gachaJobs.id, jobId), eq(gachaJobs.walletAddress, cleanAddress)))
+      .returning();
+
+    if (job && job.collectibleId) {
+      await db
+        .update(collectibles)
+        .set({ mintStatus: "minted" })
+        .where(eq(collectibles.id, job.collectibleId));
+    }
     return { success: true };
   }
 }

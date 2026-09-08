@@ -6,14 +6,11 @@ import {
   TrendingUp,
   Clock,
   Wallet,
-  User,
-  Edit3,
   BatteryCharging,
   Zap,
-  ShieldCheck,
+  Radar,
 } from "lucide-react";
 import { useDialog } from "../context/DialogContext.tsx";
-import { RenameModal } from "./RenameModal.tsx";
 
 interface IdleCockpitProps {
   address: string | null;
@@ -26,6 +23,7 @@ interface IdleCockpitProps {
   onBuyTicketSuccess: (newCoins: number, newTickets: number) => void;
   onConnectWallet: () => void;
   onRename: (newName: string) => Promise<boolean>;
+  onNavigateToScanner: () => void;
 }
 
 const MAX_IDLE_COINS = 1000;
@@ -41,14 +39,13 @@ export const IdleCockpit: React.FC<IdleCockpitProps> = ({
   onBuyTicketSuccess,
   onConnectWallet,
   onRename,
+  onNavigateToScanner,
 }) => {
   const { showWarning } = useDialog();
   const [livePending, setLivePending] = useState<number>(initialPending);
   const [isClaiming, setIsClaiming] = useState<boolean>(false);
   const [isBuying, setIsBuying] = useState<boolean>(false);
-  const [ticketCount, setTicketCount] = useState<number>(1);
   const [claimToast, setClaimToast] = useState<string | null>(null);
-  const [isRenameOpen, setIsRenameOpen] = useState<boolean>(false);
 
   // Synchronize livePending when initialPending changes
   useEffect(() => {
@@ -141,39 +138,6 @@ export const IdleCockpit: React.FC<IdleCockpitProps> = ({
       {claimToast && (
         <div className="fixed top-16 left-1/2 -translate-x-1/2 z-50 bg-space-900 border-2 border-neon-cyan px-4 py-2 rounded-xl text-neon-cyan text-xs font-mono font-bold shadow-[0_0_20px_rgba(0,240,255,0.4)] animate-in fade-in slide-in-from-top-4 duration-200">
           ✨ {claimToast}
-        </div>
-      )}
-
-      {/* Authenticated Commander Profile Card */}
-      {address && (
-        <div className="rounded-2xl bg-space-900/90 border border-space-800 p-3.5 flex items-center justify-between gap-3 shadow-md backdrop-blur-md">
-          <div className="flex items-center gap-3 min-w-0">
-            <div className="w-10 h-10 rounded-xl bg-cyan-950/80 border border-cyan-500/40 flex items-center justify-center text-neon-cyan shadow-[0_0_10px_rgba(0,240,255,0.3)] shrink-0">
-              <User className="w-5 h-5" />
-            </div>
-            <div className="min-w-0">
-              <div className="flex items-center gap-1.5">
-                <span className="text-[10px] font-mono text-cyan-400 font-bold uppercase tracking-wider">
-                  艦隊指揮官
-                </span>
-                <span className="text-[9px] font-mono px-1.5 py-0.2 rounded bg-emerald-950/80 border border-emerald-500/40 text-emerald-400">
-                  ● 已認證
-                </span>
-              </div>
-              <h2 className="text-sm font-bold font-mono text-gray-100 truncate">
-                {playerName || `Captain_${address.slice(2, 6)}`}
-              </h2>
-            </div>
-          </div>
-
-          <button
-            onClick={() => setIsRenameOpen(true)}
-            className="flex items-center gap-1 px-3 py-1.5 rounded-xl bg-space-850 hover:bg-space-800 border border-space-700/80 hover:border-cyan-500/40 text-xs font-mono text-cyan-300 transition-all active:scale-95 cursor-pointer shrink-0"
-            title="修改暱稱"
-          >
-            <Edit3 className="w-3.5 h-3.5" />
-            <span>改名</span>
-          </button>
         </div>
       )}
 
@@ -318,34 +282,17 @@ export const IdleCockpit: React.FC<IdleCockpitProps> = ({
               深空探測券補給站
             </h3>
           </div>
-          <span className="text-[11px] font-mono text-gray-400">
-            {TICKET_PRICE} 金幣 / 張
+          <span className="text-[11px] font-mono text-purple-300 font-semibold">
+            {TICKET_PRICE} 金幣 / 1 張
           </span>
         </div>
 
-        {/* Count Selector */}
-        <div className="grid grid-cols-3 gap-2">
-          {[1, 5, 10].map((num) => (
-            <button
-              key={num}
-              onClick={() => setTicketCount(num)}
-              className={`py-1.5 rounded-lg font-mono text-xs transition-all border ${
-                ticketCount === num
-                  ? "bg-purple-950/80 border-purple-500/80 text-purple-300 shadow-[0_0_10px_rgba(168,85,247,0.3)] font-bold"
-                  : "bg-space-850 border-space-800 text-gray-400 hover:text-gray-200"
-              }`}
-            >
-              {num} 張
-            </button>
-          ))}
-        </div>
-
-        {/* Buy Action Button */}
+        {/* Buy Action Button - Strictly 1 Ticket */}
         <button
-          onClick={() => handleBuyTicket(ticketCount)}
-          disabled={!address || isBuying || coins < ticketCount * TICKET_PRICE}
-          className={`w-full py-2.5 rounded-xl font-mono text-xs font-semibold transition-all active:scale-95 ${
-            address && coins >= ticketCount * TICKET_PRICE
+          onClick={() => handleBuyTicket(1)}
+          disabled={!address || isBuying || coins < TICKET_PRICE}
+          className={`w-full py-3 rounded-xl font-mono text-xs font-bold transition-all active:scale-95 ${
+            address && coins >= TICKET_PRICE
               ? "bg-purple-600 hover:bg-purple-500 text-white shadow-[0_0_15px_rgba(168,85,247,0.4)] cursor-pointer"
               : "bg-space-850 text-gray-500 border border-space-800 cursor-not-allowed"
           }`}
@@ -354,19 +301,26 @@ export const IdleCockpit: React.FC<IdleCockpitProps> = ({
             ? "兌換中..."
             : !address
             ? "請先連線錢包以兌換物資"
-            : coins < ticketCount * TICKET_PRICE
-            ? `金幣不足 (需 ${(ticketCount * TICKET_PRICE).toLocaleString()} 金幣)`
-            : `花費 ${(ticketCount * TICKET_PRICE).toLocaleString()} 金幣購買 ${ticketCount} 張探測券`}
+            : coins < TICKET_PRICE
+            ? `金幣不足 (需 ${TICKET_PRICE} 金幣)`
+            : `花費 ${TICKET_PRICE} 金幣購買 1 張探測券`}
+        </button>
+
+        {/* Jump Directly to Deep Space Scanner */}
+        <button
+          onClick={() => {
+            if (!address) {
+              onConnectWallet();
+              return;
+            }
+            onNavigateToScanner();
+          }}
+          className="w-full py-2.5 rounded-xl bg-space-850 hover:bg-space-800 border border-purple-500/40 hover:border-purple-400 text-purple-300 hover:text-white font-mono text-xs font-semibold flex items-center justify-center gap-2 transition-all active:scale-95 cursor-pointer shadow-sm"
+        >
+          <Radar className="w-3.5 h-3.5 text-purple-400" />
+          <span>🚀 立即前往深空探測 {address ? `(已有 ${tickets} 張券)` : ""}</span>
         </button>
       </div>
-
-      {/* Rename Modal */}
-      <RenameModal
-        isOpen={isRenameOpen}
-        currentName={playerName}
-        onClose={() => setIsRenameOpen(false)}
-        onSave={onRename}
-      />
     </div>
   );
 };
