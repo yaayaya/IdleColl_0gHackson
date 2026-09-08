@@ -54,8 +54,8 @@ export const Marketplace: React.FC<MarketplaceProps> = ({
   const [inspectItem, setInspectItem] = useState<any | null>(null);
 
   // Helper to extract parsed stats
-  const parseStats = (details: any) => {
-    const stats = details?.aiStats || {};
+  const parseStats = (target: any) => {
+    const stats = target?.aiStats || target?.details?.aiStats || {};
     const miningBonus = stats.miningBonus || (stats.miningBonusValue ? `+${stats.miningBonusValue}/s` : "+10%");
     const miningBonusValue = Number(stats.miningBonusValue) || (parseFloat(stats.miningBonus) ? parseFloat(stats.miningBonus) / 10 : 1.0);
     const capacityBonus = Number(stats.capacityBonus) || 100;
@@ -838,47 +838,228 @@ export const Marketplace: React.FC<MarketplaceProps> = ({
         </div>
       )}
 
-      {/* Listing Modal */}
+      {/* Upgraded Listing Modal with Full Holographic Item Inspector */}
       {isListingModalOpen && (
-        <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-4">
-          <div className="relative w-full max-w-sm rounded-2xl bg-space-900 border-2 border-neon-cyan p-5 shadow-[0_0_35px_rgba(0,240,255,0.4)] space-y-4 text-left">
-            <button
-              onClick={() => setIsListingModalOpen(false)}
-              className="absolute top-3 right-3 p-1.5 rounded-full bg-space-800 text-gray-400 hover:text-white"
-            >
-              <X className="w-4 h-4" />
-            </button>
+        <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-3 sm:p-4 overflow-y-auto overscroll-contain">
+          <div className="relative w-full max-w-sm sm:max-w-md rounded-2xl bg-space-900 border-2 border-neon-cyan p-4 sm:p-5 shadow-[0_0_40px_rgba(0,240,255,0.4)] max-h-[92vh] flex flex-col text-left">
+            {/* Modal Header */}
+            <div className="pb-3 border-b border-space-800 flex items-center justify-between shrink-0">
+              <div className="flex items-center gap-2">
+                <Tag className="w-4 h-4 text-neon-cyan shrink-0" />
+                <div>
+                  <h3 className="text-xs sm:text-sm font-bold font-mono text-gray-100 uppercase tracking-wider">
+                    上架藏品至 0G 拍賣行
+                  </h3>
+                  <p className="text-[9px] text-cyan-400/80 font-mono tracking-wider uppercase">
+                    0G MARKETPLACE LISTING PROTOCOL
+                  </p>
+                </div>
+              </div>
 
-            <h3 className="text-sm font-bold font-mono text-gray-100 flex items-center gap-2">
-              <Tag className="w-4 h-4 text-neon-cyan" />
-              <span>上架藏品至 0G 拍賣行</span>
-            </h3>
+              <button
+                onClick={() => setIsListingModalOpen(false)}
+                className="w-7 h-7 rounded-lg bg-space-800 hover:bg-space-700 text-gray-400 hover:text-white flex items-center justify-center transition-colors"
+                title="關閉"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
 
             {userItems.length === 0 ? (
-              <p className="text-xs text-gray-400 font-mono py-4 text-center">
-                你目前沒有可上架的藏品，請先至深空探測進行抽卡！
-              </p>
+              <div className="py-10 text-center space-y-3">
+                <p className="text-xs text-gray-400 font-mono">
+                  您目前錢包名下尚未解鎖任何可上架的 0G 藏品！
+                </p>
+                <p className="text-[11px] text-cyan-400 font-mono">
+                  請先至深空探測進行量子抽取，解鎖您的第一件星際遺物！
+                </p>
+              </div>
             ) : (
-              <div className="space-y-3">
-                <div>
-                  <label className="block text-[11px] font-mono text-gray-400 mb-1">選擇要出售的藏品：</label>
+              <div className="my-3 space-y-3.5 overflow-y-auto pr-1 flex-1">
+                {/* 1. Visual Horizontal Item Selector Rail */}
+                <div className="space-y-1.5">
+                  <div className="flex items-center justify-between text-[11px] font-mono">
+                    <span className="text-gray-300 font-bold">1. 選擇要掛售的藏品：</span>
+                    <span className="text-[10px] text-gray-500">持有 {userItems.length} 件</span>
+                  </div>
+
+                  {/* Horizontal Scrollable Thumbnails */}
+                  <div className="flex items-center gap-2 overflow-x-auto pb-2 pt-1 no-scrollbar">
+                    {userItems.map((item) => {
+                      const isSelected = selectedTokenId === item.tokenId;
+                      const itemRarity = item.archetype?.rarity || "Common";
+                      const itemImg = (item.archetype?.baseImage || "/items/01_ramen.svg").replace(".png", ".svg");
+
+                      return (
+                        <button
+                          key={item.tokenId}
+                          type="button"
+                          onClick={() => setSelectedTokenId(item.tokenId)}
+                          className={`w-20 shrink-0 p-2 rounded-xl flex flex-col items-center justify-between gap-1 transition-all text-left cursor-pointer ${
+                            isSelected
+                              ? "bg-space-850 border-2 border-neon-cyan shadow-[0_0_15px_rgba(0,240,255,0.45)] scale-102"
+                              : "bg-space-950/80 border border-space-800 hover:border-space-600 opacity-75 hover:opacity-100"
+                          }`}
+                        >
+                          <div className="w-12 h-12 rounded-lg bg-space-900 p-1 flex items-center justify-center border border-space-700/60">
+                            <img src={itemImg} alt={item.aiTitle} className="max-w-full max-h-full object-contain" />
+                          </div>
+
+                          <div className="w-full text-center">
+                            <span className={`text-[8px] font-mono px-1 py-0.2 rounded border font-bold block truncate ${getRarityBadgeColor(itemRarity)}`}>
+                              {itemRarity}
+                            </span>
+                            <span className="text-[9px] font-mono text-gray-300 font-bold block truncate mt-0.5">
+                              #{item.tokenId}
+                            </span>
+                          </div>
+                        </button>
+                      );
+                    })}
+                  </div>
+
+                  {/* Secondary Quick Jump Select */}
                   <select
                     value={selectedTokenId || ""}
                     onChange={(e) => setSelectedTokenId(Number(e.target.value))}
-                    className="w-full py-2 px-3 rounded-lg bg-space-850 border border-space-700 text-xs font-mono text-gray-200 focus:outline-none focus:border-neon-cyan"
+                    className="w-full py-2 px-3 rounded-lg bg-space-950 border border-space-800 text-xs font-mono text-gray-200 focus:outline-none focus:border-neon-cyan cursor-pointer"
                   >
                     {userItems.map((item) => (
                       <option key={item.tokenId} value={item.tokenId}>
-                        Token #{item.tokenId} - {item.aiTitle}
+                        Token #{item.tokenId} · [{item.archetype?.rarity || "Common"}] {item.aiTitle}
                       </option>
                     ))}
                   </select>
                 </div>
 
-                <div>
-                  <label className="block text-[11px] font-mono text-gray-400 mb-1">
-                    定價 (0G 測試幣)：
-                  </label>
+                {/* 2. Selected Item Holographic Preview Card */}
+                {(() => {
+                  const selectedItem = userItems.find((i) => i.tokenId === selectedTokenId) || userItems[0];
+                  if (!selectedItem) return null;
+
+                  const stats = parseStats(selectedItem);
+                  const rarity = selectedItem.archetype?.rarity || "Common";
+                  const image = (selectedItem.archetype?.baseImage || "/items/01_ramen.svg").replace(".png", ".svg");
+
+                  return (
+                    <div className="space-y-3 p-3 rounded-xl bg-space-950/90 border border-space-750">
+                      {/* Identity Row */}
+                      <div className="flex items-center gap-3">
+                        <div className="w-14 h-14 rounded-xl bg-space-900 p-2 flex items-center justify-center border border-space-700 shrink-0">
+                          <img src={image} alt={selectedItem.aiTitle} className="max-w-full max-h-full object-contain" />
+                        </div>
+                        <div className="space-y-1 text-left min-w-0 flex-1">
+                          <div className="flex items-center gap-2 text-[9px] font-mono">
+                            <span className={`px-1.5 py-0.5 rounded border font-bold ${getRarityBadgeColor(rarity)}`}>
+                              {rarity} 級原型 · {selectedItem.archetype?.name || "未知"}
+                            </span>
+                            <span className="text-gray-500">Token #{selectedItem.tokenId}</span>
+                          </div>
+                          <h4 className="text-xs sm:text-sm font-bold font-mono text-cyan-200 truncate" title={selectedItem.aiTitle}>
+                            {selectedItem.aiTitle}
+                          </h4>
+                        </div>
+                      </div>
+
+                      {/* AI Lore Narrative Box */}
+                      <div className="space-y-1">
+                        <label className="text-[10px] font-mono text-gray-400 font-semibold flex items-center gap-1">
+                          <Sparkles className="w-3 h-3 text-cyan-400" />
+                          <span>0G AI 解算背景傳奇：</span>
+                        </label>
+                        <div className="p-2.5 rounded-lg bg-space-900/80 border border-space-800 text-[11px] text-gray-300 leading-relaxed">
+                          {selectedItem.aiLore || "深空考古隊尚未解讀完整的星際歷史記錄。"}
+                        </div>
+                      </div>
+
+                      {/* 4 Functional Stat Tiles */}
+                      <div className="space-y-1.5">
+                        <label className="text-[10px] font-mono text-gray-400 font-semibold flex items-center gap-1">
+                          <Zap className="w-3 h-3 text-amber-400" />
+                          <span>特異實時增幅效能 (Fleet Bonuses)：</span>
+                        </label>
+
+                        <div className="grid grid-cols-2 gap-2 text-left">
+                          {/* Tile 1: Mining Bonus */}
+                          <div className="p-2 rounded-lg bg-space-900 border border-space-800 space-y-0.5">
+                            <span className="text-[9px] font-mono text-gray-400 block">⚡ 採礦產能加成</span>
+                            <span className="text-xs font-mono font-bold text-amber-300 block">
+                              {stats.miningBonus}
+                            </span>
+                            <span className="text-[8px] font-mono text-gray-500 block">
+                              +{stats.miningBonusValue} 幣/秒產率
+                            </span>
+                          </div>
+
+                          {/* Tile 2: Capacity Bonus */}
+                          <div className="p-2 rounded-lg bg-space-900 border border-space-800 space-y-0.5">
+                            <span className="text-[9px] font-mono text-gray-400 block">📦 離線池容量擴充</span>
+                            <span className="text-xs font-mono font-bold text-cyan-300 block">
+                              +{stats.capacityBonus} 金幣
+                            </span>
+                            <span className="text-[8px] font-mono text-gray-500 block">
+                              擴充放置儲能上限
+                            </span>
+                          </div>
+
+                          {/* Tile 3: Luck */}
+                          <div className="p-2 rounded-lg bg-space-900 border border-space-800 space-y-0.5">
+                            <span className="text-[9px] font-mono text-gray-400 block">🍀 幸運共振指數</span>
+                            <span className="text-xs font-mono font-bold text-emerald-300 block">
+                              {stats.luck} / 100
+                            </span>
+                            <span className="text-[8px] font-mono text-gray-500 block">
+                              提升採收 2x 爆擊機率
+                            </span>
+                          </div>
+
+                          {/* Tile 4: Special Trait */}
+                          <div className="p-2 rounded-lg bg-space-900 border border-space-800 space-y-0.5">
+                            <span className="text-[9px] font-mono text-gray-400 block">🏷️ 特異共振詞條</span>
+                            <span className="text-xs font-mono font-bold text-pink-300 block truncate" title={stats.specialTrait}>
+                              {stats.specialTrait}
+                            </span>
+                            <span className="text-[8px] font-mono text-gray-500 block truncate" title={stats.traitDescription}>
+                              {stats.traitDescription}
+                            </span>
+                          </div>
+                        </div>
+
+                        {/* Trait explanation */}
+                        <div className="p-2 rounded-lg bg-space-900/60 border border-space-800/80 text-[10px] font-mono text-gray-300 leading-relaxed">
+                          <span className="text-cyan-400 font-bold">詞條解析：</span>
+                          <span>{stats.traitDescription}</span>
+                        </div>
+                      </div>
+
+                      {/* 0G Storage Hash */}
+                      <div className="p-2 rounded-lg bg-space-900 border border-space-800 flex items-center justify-between text-[9px] font-mono text-gray-400">
+                        <span className="flex items-center gap-1 text-cyan-400">
+                          <Database className="w-3 h-3" /> 0G Storage Root
+                        </span>
+                        <span className="text-gray-300 truncate max-w-[170px]" title={selectedItem.storageHash || "鏈上存證"}>
+                          {selectedItem.storageHash || "0G-Decentralized-Storage"}
+                        </span>
+                      </div>
+
+                      {/* Fleet Custody Alert Banner */}
+                      <div className="p-2.5 rounded-xl bg-amber-950/40 border border-amber-500/40 text-[10px] font-mono text-amber-200/90 leading-relaxed flex items-start gap-2">
+                        <ShieldAlert className="w-3.5 h-3.5 text-amber-400 shrink-0 mt-0.5" />
+                        <span>
+                          <strong>艦隊託管提示：</strong>藏品掛售於拍賣行期間將移轉至 0G 智能合約託管，暫時不計入放置採礦池。隨時<strong>下架撤回</strong>後，加成將立即全數恢復。
+                        </span>
+                      </div>
+                    </div>
+                  );
+                })()}
+
+                {/* 3. Pricing Section */}
+                <div className="space-y-2 pt-1">
+                  <div className="flex items-center justify-between text-[11px] font-mono">
+                    <label className="text-gray-300 font-bold">2. 設定出售價格 (0G 原生代幣)：</label>
+                    <span className="text-[10px] text-cyan-400">Galileo 測試鏈結算</span>
+                  </div>
+
                   <div className="relative">
                     <input
                       type="number"
@@ -886,17 +1067,57 @@ export const Marketplace: React.FC<MarketplaceProps> = ({
                       min="0.0001"
                       value={priceInput}
                       onChange={(e) => setPriceInput(e.target.value)}
-                      className="w-full py-2 pl-3 pr-10 rounded-lg bg-space-850 border border-space-700 text-xs font-mono text-cyan-300 focus:outline-none focus:border-neon-cyan"
+                      className="w-full py-2.5 pl-3 pr-12 rounded-xl bg-space-950 border border-space-700 text-sm font-mono text-cyan-300 focus:outline-none focus:border-neon-cyan shadow-inner"
+                      placeholder="0.005"
                     />
-                    <span className="absolute right-3 top-2 text-xs font-mono text-gray-500">0G</span>
+                    <span className="absolute right-3.5 top-3 text-xs font-mono font-bold text-gray-400">0G</span>
                   </div>
-                  <p className="text-[9px] text-gray-500 font-mono mt-1">買家支付的 0G 原生幣將直接由智能合約即時撥付至你的錢包。</p>
-                </div>
 
+                  {/* Quick Preset Buttons */}
+                  <div className="grid grid-cols-4 gap-1.5 pt-0.5">
+                    {[
+                      { val: "0.001", label: "0.001" },
+                      { val: "0.005", label: "0.005" },
+                      { val: "0.01", label: "0.01" },
+                      { val: "0.05", label: "0.05" },
+                    ].map((p) => (
+                      <button
+                        key={p.val}
+                        type="button"
+                        onClick={() => setPriceInput(p.val)}
+                        className={`py-1 rounded-lg text-[10px] font-mono transition-all cursor-pointer ${
+                          priceInput === p.val
+                            ? "bg-cyan-500/20 text-neon-cyan border border-neon-cyan font-bold shadow-[0_0_8px_rgba(0,240,255,0.3)]"
+                            : "bg-space-950 text-gray-400 border border-space-800 hover:text-gray-200"
+                        }`}
+                      >
+                        {p.label} 0G
+                      </button>
+                    ))}
+                  </div>
+
+                  {/* Settlement Breakdown */}
+                  <div className="px-3 py-2 rounded-xl bg-space-950 border border-space-800 text-[10px] font-mono text-gray-400 space-y-1">
+                    <div className="flex items-center justify-between text-cyan-300">
+                      <span>◆ 平台交易手續費：</span>
+                      <span className="font-bold text-emerald-400">0% (智能合約免手續費)</span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span>◆ 預計淨收款項：</span>
+                      <span className="text-gray-200 font-bold">{priceInput || "0"} 0G 原生幣</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Modal Bottom Actions */}
+            {userItems.length > 0 && (
+              <div className="pt-3 border-t border-space-800 shrink-0">
                 {!isCorrectNetwork ? (
                   <button
                     onClick={switchNetwork}
-                    className="w-full py-3 rounded-xl bg-amber-500 hover:bg-amber-400 text-black font-mono font-bold text-xs shadow-[0_0_16px_rgba(245,158,11,0.4)] active:scale-95 flex items-center justify-center gap-2"
+                    className="w-full py-3 rounded-xl bg-amber-500 hover:bg-amber-400 text-black font-mono font-bold text-xs shadow-[0_0_16px_rgba(245,158,11,0.4)] active:scale-95 flex items-center justify-center gap-2 transition-all cursor-pointer"
                   >
                     <ShieldAlert className="w-4 h-4" />
                     <span>切換至 0G Galileo 測試網 (以 0G 幣交易)</span>
@@ -904,10 +1125,10 @@ export const Marketplace: React.FC<MarketplaceProps> = ({
                 ) : (
                   <button
                     onClick={handleList}
-                    disabled={!selectedTokenId || !priceInput}
-                    className="w-full py-3 rounded-xl bg-gradient-to-r from-neon-cyan to-blue-500 hover:from-cyan-400 hover:to-blue-400 text-black font-mono font-bold text-xs shadow-[0_0_16px_rgba(0,240,255,0.4)] active:scale-95 disabled:opacity-50"
+                    disabled={!selectedTokenId || !priceInput || parseFloat(priceInput) <= 0}
+                    className="w-full py-3 rounded-xl bg-gradient-to-r from-neon-cyan to-blue-500 hover:from-cyan-400 hover:to-blue-400 text-black font-mono font-bold text-xs shadow-[0_0_16px_rgba(0,240,255,0.4)] active:scale-95 disabled:opacity-50 transition-all cursor-pointer"
                   >
-                    確認上架 (簽署 0G 智能合約)
+                    確認發布賣單 (簽署 0G 智能合約)
                   </button>
                 )}
               </div>
