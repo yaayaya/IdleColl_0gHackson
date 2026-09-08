@@ -71,17 +71,17 @@ export const RenameModal: React.FC<RenameModalProps> = ({
 
   const modalContent = (
     <div
-      className="fixed inset-0 z-[10000] flex items-center justify-center p-4 sm:p-6 overflow-y-auto bg-black/85 backdrop-blur-md animate-in fade-in duration-200"
+      className="fixed inset-0 z-[10000] flex items-center justify-center p-3 sm:p-4 overflow-y-auto overscroll-contain bg-black/85 backdrop-blur-sm animate-in fade-in duration-200"
       onClick={(e) => {
         if (e.target === e.currentTarget) onClose();
       }}
     >
-      <div className="relative w-full max-w-sm rounded-2xl bg-space-900/95 border-2 border-cyan-500/60 p-5 sm:p-6 space-y-4 shadow-[0_0_40px_rgba(0,240,255,0.25)] backdrop-blur-xl animate-in zoom-in-95 duration-200 overflow-hidden">
+      <div className="relative w-full max-w-sm my-auto max-h-[calc(100dvh-2rem)] flex flex-col rounded-2xl bg-space-900/98 border-2 border-cyan-500/60 shadow-2xl backdrop-blur-xl animate-in zoom-in-95 duration-200 overflow-hidden">
         {/* Top ambient laser glow line */}
         <div className="absolute top-0 left-1/4 right-1/4 h-[2px] bg-gradient-to-r from-transparent via-cyan-400 to-transparent shadow-[0_0_12px_#00f0ff]" />
 
         {/* Top Header */}
-        <div className="flex items-center justify-between border-b border-space-800 pb-2.5">
+        <div className="flex items-center justify-between p-4 pb-3 border-b border-space-800 shrink-0">
           <div className="flex items-center gap-2">
             <div className="w-8 h-8 rounded-xl bg-cyan-950/80 border border-cyan-500/40 flex items-center justify-center text-neon-cyan shadow-[0_0_10px_rgba(0,240,255,0.35)]">
               <User className="w-4 h-4" />
@@ -97,15 +97,15 @@ export const RenameModal: React.FC<RenameModalProps> = ({
           </div>
           <button
             onClick={onClose}
-            className="p-1.5 rounded-lg bg-space-850 hover:bg-space-800 border border-space-700/60 text-gray-400 hover:text-white transition-all active:scale-95"
+            className="w-8 h-8 rounded-lg bg-space-850 hover:bg-space-800 border border-space-700/60 text-gray-400 hover:text-white transition-all active:scale-95 flex items-center justify-center touch-manipulation cursor-pointer"
             title="關閉"
           >
-            <X className="w-3.5 h-3.5" />
+            <X className="w-4 h-4" />
           </button>
         </div>
 
         {/* Form Body */}
-        <form onSubmit={handleSubmit} className="space-y-4 pt-1">
+        <form onSubmit={handleSubmit} className="overflow-y-auto overscroll-contain p-4 sm:p-5 space-y-4 flex-1 text-left">
           <div className="space-y-1.5">
             <label className="block text-xs font-mono text-gray-300">
               請輸入專屬星際呼號 (1 ~ 20 字)：
@@ -120,7 +120,7 @@ export const RenameModal: React.FC<RenameModalProps> = ({
                 }}
                 maxLength={20}
                 placeholder="例如：銀河漫步者、0G 先鋒官..."
-                className="w-full px-3.5 py-2.5 rounded-xl bg-space-950/80 border border-space-700 focus:border-cyan-400 text-sm font-mono text-gray-100 placeholder:text-gray-600 focus:outline-none focus:ring-1 focus:ring-cyan-400/40 transition-all"
+                className="w-full min-h-[44px] px-3.5 py-2.5 rounded-xl bg-space-950/80 border border-space-700 focus:border-cyan-400 text-sm font-mono text-gray-100 placeholder:text-gray-600 focus:outline-none focus:ring-1 focus:ring-cyan-400/40 transition-all"
                 autoFocus
               />
               <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] font-mono text-gray-500">
@@ -137,18 +137,18 @@ export const RenameModal: React.FC<RenameModalProps> = ({
           </div>
 
           {/* Actions */}
-          <div className="grid grid-cols-2 gap-2.5 pt-1">
+          <div className="grid grid-cols-2 gap-2.5 pt-2">
             <button
               type="button"
               onClick={onClose}
-              className="w-full py-2.5 px-4 rounded-xl bg-space-850 hover:bg-space-800 border border-space-700 text-gray-300 text-xs font-mono font-bold active:scale-95 transition-all cursor-pointer"
+              className="w-full min-h-[44px] py-2.5 px-4 rounded-xl bg-space-850 hover:bg-space-800 border border-space-700 text-gray-300 text-xs font-mono font-bold active:scale-95 transition-all cursor-pointer touch-manipulation flex items-center justify-center"
             >
               取消
             </button>
             <button
               type="submit"
               disabled={isSaving}
-              className="w-full py-2.5 px-4 rounded-xl bg-gradient-to-r from-neon-cyan via-cyan-400 to-blue-500 hover:from-cyan-300 hover:to-blue-400 text-black font-mono font-bold text-xs shadow-[0_0_15px_rgba(0,240,255,0.4)] active:scale-95 transition-all cursor-pointer flex items-center justify-center gap-1.5 disabled:opacity-50"
+              className="w-full min-h-[44px] py-2.5 px-4 rounded-xl bg-gradient-to-r from-neon-cyan via-cyan-400 to-blue-500 hover:from-cyan-300 hover:to-blue-400 text-black font-mono font-bold text-xs shadow-[0_0_15px_rgba(0,240,255,0.4)] active:scale-95 transition-all cursor-pointer touch-manipulation flex items-center justify-center gap-1.5 disabled:opacity-50"
             >
               {isSaving ? (
                 <span>儲存中...</span>

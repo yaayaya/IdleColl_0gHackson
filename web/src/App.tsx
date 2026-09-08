@@ -7,7 +7,7 @@ import { Marketplace } from "./components/Marketplace.tsx";
 import { RenameModal } from "./components/RenameModal.tsx";
 import { ConnectWalletModal } from "./components/ConnectWalletModal.tsx";
 import { ScannerQueueProvider } from "./context/ScannerQueueContext.tsx";
-import { useWeb3 } from "./hooks/useWeb3.ts";
+import { useWeb3, getEthereumProvider } from "./hooks/useWeb3.ts";
 import { Pickaxe, Radar, BookOpen, ShoppingBag } from "lucide-react";
 
 type TabType = "cockpit" | "scanner" | "codex" | "market";
@@ -36,12 +36,8 @@ export function App() {
   const [isConnectModalOpen, setIsConnectModalOpen] = useState<boolean>(false);
 
   const handleConnectClick = () => {
-    const eth = typeof window !== "undefined" ? (window as any).ethereum : null;
-    const hasAuthenticExtension = Boolean(
-      eth && eth.isMetaMask && !eth._log
-    );
-
-    if (hasAuthenticExtension) {
+    const eth = getEthereumProvider();
+    if (eth) {
       connectWallet();
     } else {
       setIsConnectModalOpen(true);
@@ -110,9 +106,9 @@ export function App() {
       onTicketsChange={(newTickets) => setTickets(newTickets)}
       onCollectiblesUpdated={() => fetchProfile()}
     >
-      <div className="min-h-screen bg-space-950 flex justify-center text-gray-100 selection:bg-neon-cyan selection:text-black">
+      <div className="min-h-[100dvh] bg-space-950 flex justify-center text-gray-100 selection:bg-neon-cyan selection:text-black">
         {/* Mobile App Container Shell */}
-        <div className="w-full max-w-md min-h-screen flex flex-col bg-space-950 border-x border-space-850 shadow-2xl relative">
+        <div className="w-full max-w-lg min-h-[100dvh] flex flex-col bg-space-950 border-x border-space-850/50 shadow-2xl relative">
           {/* Top Navbar */}
           <Navbar
             address={address}
@@ -128,7 +124,7 @@ export function App() {
           />
 
           {/* Main Content View */}
-          <main className="flex-1 p-4 overflow-y-auto">
+          <main className="flex-1 p-4 pb-28">
             {activeTab === "cockpit" && (
               <IdleCockpit
                 address={address}
@@ -177,7 +173,7 @@ export function App() {
           </main>
 
           {/* Fixed Mobile Bottom Tab Bar */}
-          <nav className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-md bg-space-950/95 backdrop-blur-md border-t border-space-800 px-3 py-2 pb-safe flex items-center justify-around z-40">
+          <nav className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-lg bg-space-950/95 backdrop-blur-md border-t border-space-800 px-3 py-2 pb-safe flex items-center justify-around z-40">
             {[
               { id: "cockpit", label: "採礦艙", icon: Pickaxe },
               { id: "scanner", label: "深空探測", icon: Radar },

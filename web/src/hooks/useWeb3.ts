@@ -41,14 +41,24 @@ export function isMobileDevice(): boolean {
 
 export function getEthereumProvider(): any {
   if (typeof window === "undefined") return null;
+  const anyWin = window as any;
+
   // 1. If window.ethereum is already present (e.g. desktop extension or in-app browser), use it
-  if ((window as any).ethereum) {
-    return (window as any).ethereum;
+  if (anyWin.ethereum) {
+    // If multiple providers installed (e.g. MetaMask, OKX, Rabby, Phantom)
+    if (anyWin.ethereum.providers && Array.isArray(anyWin.ethereum.providers)) {
+      const mm = anyWin.ethereum.providers.find((p: any) => p.isMetaMask);
+      if (mm) return mm;
+      return anyWin.ethereum.providers[0];
+    }
+    return anyWin.ethereum;
   }
+
   // 2. On PC: strictly extension / plugin only! Do not load MetaMask SDK or show QR codes.
   if (!isMobileDevice()) {
     return null;
   }
+
   // 3. Otherwise on mobile: get provider from MetaMask SDK
   const sdk = getMMSDK();
   return sdk?.getProvider() || null;

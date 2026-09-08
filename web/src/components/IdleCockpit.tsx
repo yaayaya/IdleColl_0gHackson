@@ -309,15 +309,18 @@ export const IdleCockpit: React.FC<IdleCockpitProps> = ({
         {/* Jump Directly to Deep Space Scanner */}
         <button
           onClick={() => {
-            if (!address) {
-              onConnectWallet();
-              return;
-            }
+            if (!address) return;
             onNavigateToScanner();
           }}
-          className="w-full py-2.5 rounded-xl bg-space-850 hover:bg-space-800 border border-purple-500/40 hover:border-purple-400 text-purple-300 hover:text-white font-mono text-xs font-semibold flex items-center justify-center gap-2 transition-all active:scale-95 cursor-pointer shadow-sm"
+          disabled={!address}
+          className={`w-full py-2.5 rounded-xl font-mono text-xs font-semibold flex items-center justify-center gap-2 transition-all ${
+            !address
+              ? "bg-space-850/40 text-gray-600 border border-space-800/60 opacity-40 cursor-not-allowed select-none"
+              : "bg-space-850 hover:bg-space-800 border border-purple-500/40 hover:border-purple-400 text-purple-300 hover:text-white active:scale-95 cursor-pointer shadow-sm"
+          }`}
+          title={!address ? "請先連線錢包以啟用深空探測" : undefined}
         >
-          <Radar className="w-3.5 h-3.5 text-purple-400" />
+          <Radar className={`w-3.5 h-3.5 ${!address ? "text-gray-600" : "text-purple-400"}`} />
           <span>🚀 立即前往深空探測 {address ? `(已有 ${tickets} 張券)` : ""}</span>
         </button>
       </div>

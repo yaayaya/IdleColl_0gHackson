@@ -242,11 +242,11 @@ export const DialogProvider: React.FC<{ children: ReactNode }> = ({ children }) 
   const dialogModal =
     mounted && currentDialog && currentStyle ? (
       <div
-        className="fixed inset-0 z-[10000] flex items-center justify-center p-4 sm:p-6 overflow-y-auto bg-black/85 backdrop-blur-md animate-in fade-in duration-200"
+        className="fixed inset-0 z-[10000] flex items-center justify-center p-3 sm:p-4 overflow-y-auto overscroll-contain bg-black/85 backdrop-blur-sm animate-in fade-in duration-200"
         onClick={handleBackdropClick}
       >
         <div
-          className={`relative w-full max-w-sm sm:max-w-md rounded-2xl bg-space-900/95 border-2 ${currentStyle.border} p-5 sm:p-6 space-y-4 shadow-2xl backdrop-blur-xl animate-in zoom-in-95 duration-200 overflow-hidden`}
+          className={`relative w-full max-w-sm sm:max-w-md my-auto max-h-[calc(100dvh-2rem)] flex flex-col rounded-2xl bg-space-900/98 border-2 ${currentStyle.border} shadow-2xl backdrop-blur-xl animate-in zoom-in-95 duration-200 overflow-hidden`}
         >
           {/* Top ambient glowing accent line */}
           <div
@@ -254,7 +254,7 @@ export const DialogProvider: React.FC<{ children: ReactNode }> = ({ children }) 
           />
 
           {/* Top decorative header */}
-          <div className="flex items-center justify-between border-b border-space-800 pb-2.5">
+          <div className="flex items-center justify-between p-4 pb-3 border-b border-space-800 shrink-0">
             <div className="flex items-center gap-2">
               <span className={`w-2 h-2 rounded-full ${currentStyle.dotColor} shadow-[0_0_8px_currentColor]`} />
               <span
@@ -265,15 +265,15 @@ export const DialogProvider: React.FC<{ children: ReactNode }> = ({ children }) 
             </div>
             <button
               onClick={handleCancelClick}
-              className="p-1.5 rounded-lg bg-space-850 hover:bg-space-800 border border-space-700/60 hover:border-space-600 text-gray-400 hover:text-white transition-all active:scale-95"
+              className="w-8 h-8 rounded-lg bg-space-850 hover:bg-space-800 border border-space-700/60 hover:border-space-600 text-gray-400 hover:text-white transition-all active:scale-95 flex items-center justify-center touch-manipulation cursor-pointer"
               title="關閉"
             >
-              <X className="w-3.5 h-3.5" />
+              <X className="w-4 h-4" />
             </button>
           </div>
 
-          {/* Content section */}
-          <div className="flex items-start gap-3.5 pt-1">
+          {/* Scrollable Content section */}
+          <div className="flex items-start gap-3.5 p-4 sm:p-5 overflow-y-auto overscroll-contain flex-1">
             <div
               className={`w-11 h-11 sm:w-12 sm:h-12 rounded-xl border flex items-center justify-center shrink-0 shadow-lg ${currentStyle.iconBg}`}
             >
@@ -290,19 +290,19 @@ export const DialogProvider: React.FC<{ children: ReactNode }> = ({ children }) 
             </div>
           </div>
 
-          {/* Action buttons */}
-          <div className="pt-2">
+          {/* Fixed Action buttons footer */}
+          <div className="p-4 pt-3 border-t border-space-800/80 shrink-0">
             {currentDialog.cancelText ? (
               <div className="grid grid-cols-2 gap-2.5 sm:gap-3">
                 <button
                   onClick={handleCancelClick}
-                  className="w-full py-2.5 px-4 rounded-xl bg-space-850 hover:bg-space-800 border border-space-700 hover:border-space-600 text-gray-300 hover:text-white text-xs sm:text-sm font-mono font-bold active:scale-95 transition-all cursor-pointer"
+                  className="w-full min-h-[44px] py-2.5 px-4 rounded-xl bg-space-850 hover:bg-space-800 border border-space-700 hover:border-space-600 text-gray-300 hover:text-white text-xs sm:text-sm font-mono font-bold active:scale-95 transition-all cursor-pointer touch-manipulation flex items-center justify-center"
                 >
                   {currentDialog.cancelText}
                 </button>
                 <button
                   onClick={handleConfirmClick}
-                  className={`w-full py-2.5 px-4 rounded-xl font-mono font-bold text-xs sm:text-sm active:scale-95 transition-all cursor-pointer ${currentStyle.button}`}
+                  className={`w-full min-h-[44px] py-2.5 px-4 rounded-xl font-mono font-bold text-xs sm:text-sm active:scale-95 transition-all cursor-pointer touch-manipulation flex items-center justify-center ${currentStyle.button}`}
                 >
                   {currentDialog.confirmText || "確認"}
                 </button>
@@ -310,7 +310,7 @@ export const DialogProvider: React.FC<{ children: ReactNode }> = ({ children }) 
             ) : (
               <button
                 onClick={handleConfirmClick}
-                className={`w-full py-2.5 sm:py-3 px-5 rounded-xl font-mono font-bold text-xs sm:text-sm active:scale-95 transition-all cursor-pointer ${currentStyle.button}`}
+                className={`w-full min-h-[44px] py-2.5 sm:py-3 px-5 rounded-xl font-mono font-bold text-xs sm:text-sm active:scale-95 transition-all cursor-pointer touch-manipulation flex items-center justify-center ${currentStyle.button}`}
               >
                 {currentDialog.confirmText || "確定"}
               </button>
