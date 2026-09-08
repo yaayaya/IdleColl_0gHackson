@@ -1,51 +1,94 @@
 # IdleColl — 0G Deep Space Collector (星際放置收集與鏈上 AI 拍賣行)
 
-> **0G Hackathon 參賽作品**：融合 **0G Serving (AI 故事與詞條生成)**、**0G Storage (去中心化 Metadata 永存)** 與 **0G Chain (NFT 確權與原生 0G 去中心化拍賣結算)** 的 Mobile-First PWA 星際放置收集手遊。
+<p align="center">
+  <strong>繁體中文</strong> | <a href="README.zh-CN.md">简体中文</a>
+</p>
+
+<p align="center">
+  <img src="web/public/items/chip.png" alt="IdleColl Logo" width="100" />
+</p>
+
+<p align="center">
+  <strong>0G Hackathon 參賽作品</strong><br>
+  結合 <b>0G Compute (去中心化 AI 推理)</b>、<b>0G Storage (去中心化 Metadata 存證)</b> 與 <b>0G Galileo Testnet (智能合約確權與去中心化結算)</b> 的 Mobile-First Web3 星際放置收集與拍賣手遊。
+</p>
 
 ---
 
-## 遊戲核心亮點
+## 🌟 遊戲核心特色與重大突破
 
-1. **傳統圖鑑的收集爽感 (12 格星際矩陣)**：
-   - 玩家透過放置累積星際金幣、購買探測券進行「深空抽卡」。
-   - 12 款精心設計的星際像素藏品（從過期太空泡麵到 0G 創世晶片），直觀點亮 0/12 至 12/12 收集進度。
-2. **0G AI 賦予獨特靈魂**：
-   - 每次抽卡由 **0G AI** 動態生成獨一無二的專屬稱號、星際背景傳奇故事、特殊特性與數值加成。
-3. **0G Storage 永久封存**：
-   - AI 生成的標準 ERC-721 Metadata 直接寫入 **0G Storage 去中心化節點**，生成 `0g://...` 不可篡改雜湊。
-4. **0G Chain 自動鑄造與零摩擦體驗**：
-   - 抽卡時由伺服器 Minter 錢包自動將 NFT 鑄造到玩家地址，**玩家抽卡完全零彈窗、零 Gas 負擔**！
-5. **0G 拍賣行真實鏈上結算**：
-   - 玩家間以 **0G 測試網原生代幣 (0G)** 進行點對點掛售與購買，合約即時完成原子轉移，在 0G Explorer 隨時可查。
-6. **Mobile-First PWA 手遊體驗**：
-   - 直式手遊沉浸版面（Max-w-md 440px 自適應）、底部 Tab Bar、輕量震動反饋 (Haptic Feedback)、適配 iPhone 瀏海與 Home Bar 安全區，支援「加入主畫面」獨立全螢幕運行。
+IdleColl 徹底重構了傳統鏈遊「數值枯燥」與「NFT 僅為靜態圖片」的弊病，打造出一個全流程與 0G 技術深度耦合的去中心化星際冒險世界：
+
+### 1. 🧬 0G Compute 去中心化 AI 遺物解算引擎
+* **真實去中心化 AI 推理**：接入 0G Compute Network，部署大語言模型 `qwen/qwen2.5-omni-7b` 擔任「深空星際考古學家」。
+* **絕不重複的原創靈魂**：每當探測任務完成，AI Agent 依據原型與稀有度即時解算專屬稱號（如「「星際巨獸之眼」戴森球能量碎塊」）、繁體中文星際歷史由來與奇異現象傳奇故事（`aiLore`）。
+* **四大實體屬性結構化輸出**：動態賦予 ⚡ 採礦產能加成（`miningBonus`）、📦 離線容量擴充（`capacityBonus`）、🍀 幸運共振指數（`luck`）以及 🏷️ 獨特特異詞條與詳細解析（`specialTrait` & `traitDescription`）。
+
+### 2. ⚡ 星際艦隊實體加成引擎 (Fleet Synergy Engine)
+* **告別裝飾用詞條**：玩家持有的所有 NFT 藏品屬性，將在後端即時聚合為艦隊全域被動效果池！
+  * **採礦產能實體累加**：基礎 `10 幣/秒 + Σ(藏品 bonusMiningRate)`，每秒產出真實倍增。
+  * **離線容量無縫擴充**：基礎 `1000 上限 + Σ(藏品 capacityBonus)`，大幅延長離線收益累積時間。
+  * **2x 雙倍爆擊採收 (Critical Harvest)**：艦隊幸運值（最高 99）將動態轉化為收取金幣時的雙倍爆擊機率（最高達 35%），觸發 0G 能量共振！
+
+### 3. 📦 0G Storage 去中心化永久封存
+* AI 解算生成的標準 ERC-721 Metadata 直接打包上傳至 **0G Storage 去中心化儲存節點**。
+* 每件藏品均生成不可篡改的 `0g://...` 存證 Root Hash，並可在拍賣行與圖鑑中即時溯源檢測。
+
+### 4. 💎 0G 鏈上原生拍賣行與全息檢測儀 (Marketplace & Holographic Inspector)
+* **0G 原生幣撮合結算**：買賣全程在 0G Galileo 測試鏈上以原生 0G 代幣進行，0% 平台手續費，售出代幣 100% 直撥賣家錢包。
+* **可視化藏品橫向輪播軌道 (Visual Selector Rail)**：告別陽春下拉選單，卡片化展示微縮圖、稀有度徽章與 Token ID，點選即時切換。
+* **上架全息即時檢測**：上架前完整預覽 AI 背景故事、4 大實體屬性磚、0G Storage Root 與艦隊託管產能提示。
+* **快捷定價膠囊**：提供 `0.001 0G`、`0.005 0G`、`0.01 0G`、`0.05 0G` 一鍵填入。
+* **買家全方位過濾**：支援全文模糊搜尋（名稱/詞條/Token ID）、稀有度標籤篩選、五向排序（價格低/高、產能最高、幸運最高、Token ID）。
+
+### 5. 🚀 全流程非同步 Loading 與極致 UX
+* **全站轉圈圈動態反饋 (`Loader2` animate-spin)**：連線錢包、切換網路、拍賣上架（Approve/List 雙階段）、購買交易、下架撤回、收取收益、購買探測券等所有按鈕均具備動態旋轉載入與防連點鎖定。
+* **平滑動態簽署者解析**：切換網路不重載網頁（徹底移除 `window.location.reload()`），動態調用 MetaMask，保留彈窗與操作狀態。
+* **智慧預先授權檢查**：上架時自動檢查鏈上授權，已授權項目自動跳過 Approve 步驟，省時又省 Gas。
 
 ---
 
-## 專案架構 (Monorepo)
+## 📱 Mobile-First PWA 架構
+
+IdleColl 專為智慧型手機與行動 Web3 錢包精心打磨：
+* **沉浸式直式螢幕規格**：`max-w-lg min-h-[100dvh]`，適配 iPhone 動態島、瀏海與 Home Bar 安全區 (`pb-safe`)。
+* **MetaMask 手機 App 深度整合**：提供一鍵喚醒 App 連線與內建專用瀏覽器跳轉支援。
+* **PWA 獨立 App 運行**：支援手機瀏覽器「加入主畫面 (Add to Home Screen)」，提供如同原生 App 的全螢幕沈浸操作體驗。
+
+---
+
+## 🏗️ 專案技術架構 (Monorepo)
 
 ```text
 IdleColl_0gHackson/
-├── contracts/          # 0G Galileo 智能合約 (Hardhat + Solidity 0.8.28, cancun)
+├── contracts/                  # 0G Galileo 智能合約 (Hardhat + Solidity 0.8.28)
 │   ├── contracts/
 │   │   ├── IdleCollNFT.sol         # ERC-721 藏品合約 (支援 0G Storage URI)
-│   │   └── IdleCollMarketplace.sol # 0G 原生幣結算市場合約
-│   └── scripts/deploy.ts           # 一鍵部署至 0G Galileo 並同步 ABI
-├── server/             # Fastify + TypeScript + Drizzle ORM + PostgreSQL 16
+│   │   └── IdleCollMarketplace.sol # 0G 原生幣去中心化拍賣合約 (免手續費、安全託管)
+│   └── scripts/deploy.ts           # 一鍵部署至 0G 測試網並自動同步 ABI
+├── server/                     # Fastify + TypeScript + Drizzle ORM + PostgreSQL 16
 │   ├── src/services/
-│   │   ├── zerog-ai.ts             # 0G Serving AI 推論引擎
-│   │   ├── zerog-storage.ts        # 0G Storage 上傳與雜湊計算
-│   │   └── chain-minter.ts         # 0G Chain 自動鑄造服務
-│   └── src/routes/                 # 放置採礦 / 抽卡 / 圖鑑 / 拍賣 API
-├── web/                # React 19 + Vite + TailwindCSS + Ethers v6
-│   ├── src/components/ # Cockpit / Scanner / CodexMatrix / Marketplace / Navbar
-│   └── public/items/   # 12 款星際藏品美術視覺
-└── docker-compose.yml  # PostgreSQL + Backend + Frontend 容器化編排
+│   │   ├── zerog-ai.ts             # 0G Compute AI 網路推理解算引擎 (qwen2.5-omni-7b)
+│   │   ├── zerog-storage.ts        # 0G Storage 永存節點上傳與雜湊計算
+│   │   ├── chain-minter.ts         # 0G 區塊鏈代付自動鑄造服務
+│   │   └── gacha-queue.ts          # 深空探測非同步排程佇列 (上限 2 併發)
+│   └── src/routes/                 # 採礦產率 / 探測任務 / 星際圖鑑 / 拍賣行 API
+├── web/                        # React 19 + Vite 6 + TailwindCSS + Ethers v6
+│   ├── src/components/
+│   │   ├── IdleCockpit.tsx         # 採礦艙儀表板 (反應爐、儲能池進度、探測券兌換)
+│   │   ├── DeepSpaceScanner.tsx    # 深空探測雷達 (動態掃描波、非同步任務進度卡)
+│   │   ├── CodexMatrix.tsx         # 12 格星際圖鑑矩陣 (變體展開、屬性透析)
+│   │   ├── Marketplace.tsx         # 0G 拍賣行 (可視化上架、全息檢測儀、買賣合約)
+│   │   ├── ConnectWalletModal.tsx  # 多端錢包認證協定彈窗 (外掛與手機喚醒)
+│   │   └── Navbar.tsx              # 頂部導航欄 (即時資源條、艦長暱稱、網路切換)
+│   └── src/hooks/
+│       └── useWeb3.ts              # 零重載 Web3 核心鉤子 (Provider/Signer 動態切換)
+└── docker-compose.yml          # PostgreSQL + Fastify + Web 容器化一鍵編排
 ```
 
 ---
 
-## 快速啟動指南
+## ⚡ 快速開始 (Quick Start)
 
 ### 方式一：Docker Compose 一鍵啟動 (推薦)
 
@@ -56,24 +99,23 @@ cp .env.example .env
 # 2. 啟動所有容器 (PostgreSQL 16, Fastify Server, React Web)
 docker compose up -d
 
-# 3. 開啟瀏覽器
-# 前端介面: http://localhost:5173
-# 後端 API:  http://localhost:3001
-# 公網正式上線: https://idlecoll.yayayayaya.xyz (Cloudflare Tunnel)
+# 3. 開啟瀏覽器訪問
+# 前端遊戲介面: http://localhost:5173
+# 後端 API 服務: http://localhost:3001
 ```
 
 ### 方式二：本地開發啟動 (Local Dev)
 
 ```bash
-# 1. 啟動 PostgreSQL 資料庫
+# 1. 啟動資料庫
 docker compose up -d postgres
 
-# 2. 啟動後端
+# 2. 啟動後端服務
 cd server
 npm install
 npm run dev
 
-# 3. 啟動前端 (另開終端)
+# 3. 啟動前端介面 (另開終端)
 cd web
 npm install
 npm run dev
@@ -81,49 +123,49 @@ npm run dev
 
 ---
 
-## 🌐 線上預覽與 Cloudflare Tunnel 部署
+## ⛓️ 0G Galileo 測試網路參數
 
-本專案配置 Cloudflare Tunnel 實現全球加速與 SSL 保護：
-- **線上網址**：[https://idlecoll.yayayayaya.xyz](https://idlecoll.yayayayaya.xyz)
-- **架構**：`Cloudflare Edge -> cloudflared tunnel -> Docker (idlecoll-web / Nginx) -> Fastify Server -> PostgreSQL 16`
-- **一鍵啟動 Tunnel**：`docker compose up -d tunnel`
+| 配置項目 | 參數值 |
+| :--- | :--- |
+| **網路名稱 (Network Name)** | 0G Galileo Testnet |
+| **RPC 節點** | `https://0g-galileo-testnet.drpc.org` / `https://evmrpc-testnet.0g.ai` |
+| **鏈 ID (Chain ID)** | `16602` (`0x40da`) |
+| **貨幣符號 (Symbol)** | `0G` |
+| **區塊瀏覽器 (Explorer)** | [https://chainscan-galileo.0g.ai](https://chainscan-galileo.0g.ai) |
+| **官方水龍頭 (Faucet)** | [https://faucet.0g.ai/](https://faucet.0g.ai/) (每日可領取 0.1 0G 測試幣) |
+| **NFT 智能合約** | [`0x60479646778b63D9B42AD798151c634b131ACdA4`](https://chainscan-galileo.0g.ai/address/0x60479646778b63D9B42AD798151c634b131ACdA4) |
+| **拍賣行智能合約** | [`0xDF0677568b154499214A62a44f0C4D1EB8de6CBB`](https://chainscan-galileo.0g.ai/address/0xDF0677568b154499214A62a44f0C4D1EB8de6CBB) |
 
 ---
 
-## 智能合約部署至 0G Galileo 測試網
+## 🛠️ 智能合約指令
 
-合約工程已配置好 0G Galileo Testnet (Chain ID `16602`)：
+合約目錄位於 `contracts/`，使用 Hardhat 構建：
 
 ```bash
 cd contracts
 
-# 執行單元測試 (驗證 NFT 鑄造、上架與原生幣購買結算)
+# 執行自動化測試 (包含 NFT 鑄造、市場合約上架、買賣交割與下架驗證)
 npm test
 
-# 部署至 0G Galileo 測試網 (需確保 .env 中 MINTER_PRIVATE_KEY 擁有少量 0G 測試幣)
+# 部署至 0G Galileo 測試網
 npx hardhat run scripts/deploy.ts --network zeroG
 ```
-*部署腳本執行後，會自動將最新的合約地址與 ABI 同步更新至 `web/src/contracts/contracts.json` 與 `server/src/contracts/contracts.json`。*
+*部署完成後，腳本會自動同步最新的合約地址與 ABI 至前端與後端專案目錄。*
 
 ---
 
-## 0G 網路配置參數
+## 🌐 線上遊玩與 PWA 安裝說明
 
-| 項目 | 參數值 |
-|---|---|
-| **Network Name** | 0G Galileo Testnet |
-| **RPC URL** | `https://evmrpc-testnet.0g.ai` |
-| **Chain ID** | `16602` (`0x40da`) |
-| **Currency Symbol** | `0G` |
-| **NFT Contract** | [`0x60479646778b63D9B42AD798151c634b131ACdA4`](https://chainscan-galileo.0g.ai/address/0x60479646778b63D9B42AD798151c634b131ACdA4) |
-| **Marketplace Contract** | [`0xDF0677568b154499214A62a44f0C4D1EB8de6CBB`](https://chainscan-galileo.0g.ai/address/0xDF0677568b154499214A62a44f0C4D1EB8de6CBB) |
-| **Block Explorer** | [https://chainscan-galileo.0g.ai](https://chainscan-galileo.0g.ai) |
-| **Faucet 水龍頭** | [https://faucet.0g.ai/](https://faucet.0g.ai/) (每日領取 0.1 0G) |
+1. **線上體驗網址**：[https://idlecoll.yayayayaya.xyz](https://idlecoll.yayayayaya.xyz)
+2. **手機錢包瀏覽**：
+   - 開啟 **MetaMask App** ➔ 點擊底部「瀏覽器」圖示 ➔ 輸入網址即可直接遊玩。
+   - 錢包將自動彈出 0G Galileo 測試網路的切換與新增引導。
+3. **PWA 全螢幕體驗**：
+   - 在 Safari 或 Chrome 點擊「分享」或「更多選單」➔ 點選「加入主畫面 (Add to Home Screen)」，即可享有零網址列的原生手遊體驗！
 
 ---
 
-## 手機遊玩與 PWA 安裝教學
+## 📜 開源許可
 
-1. **手機直接遊玩**：在手機端打開 **MetaMask App**，切換至內建瀏覽器，輸入線上正式網址 [https://idlecoll.yayayayaya.xyz](https://idlecoll.yayayayaya.xyz)，錢包將自動注入並引導切換至 0G 網路！
-2. **加入主畫面 (PWA)**：在手機瀏覽器點擊「分享」->「加入主畫面 (Add to Home Screen)」，即可享有如原生 App 般的獨立全螢幕體驗。
-
+本專案遵循 [MIT License](LICENSE) 開源協議。歡迎 0G 社群開發者進行 Fork、交流與二創！
