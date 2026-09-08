@@ -1,24 +1,46 @@
 import React, { useState, useEffect } from "react";
-import { Pickaxe, Ticket, Sparkles, TrendingUp, Clock } from "lucide-react";
+import {
+  Pickaxe,
+  Ticket,
+  Sparkles,
+  TrendingUp,
+  Clock,
+  Wallet,
+  User,
+  Edit3,
+  BatteryCharging,
+  Zap,
+  ShieldCheck,
+} from "lucide-react";
 import { useDialog } from "../context/DialogContext.tsx";
+import { RenameModal } from "./RenameModal.tsx";
 
 interface IdleCockpitProps {
   address: string | null;
+  playerName: string;
   coins: number;
   tickets: number;
   initialPending: number;
   miningRate: number;
   onClaimSuccess: (newCoins: number, claimed: number) => void;
   onBuyTicketSuccess: (newCoins: number, newTickets: number) => void;
+  onConnectWallet: () => void;
+  onRename: (newName: string) => Promise<boolean>;
 }
+
+const MAX_IDLE_COINS = 1000;
 
 export const IdleCockpit: React.FC<IdleCockpitProps> = ({
   address,
+  playerName,
   coins,
+  tickets,
   initialPending,
   miningRate,
   onClaimSuccess,
   onBuyTicketSuccess,
+  onConnectWallet,
+  onRename,
 }) => {
   const { showWarning } = useDialog();
   const [livePending, setLivePending] = useState<number>(initialPending);
@@ -26,19 +48,27 @@ export const IdleCockpit: React.FC<IdleCockpitProps> = ({
   const [isBuying, setIsBuying] = useState<boolean>(false);
   const [ticketCount, setTicketCount] = useState<number>(1);
   const [claimToast, setClaimToast] = useState<string | null>(null);
+  const [isRenameOpen, setIsRenameOpen] = useState<boolean>(false);
 
   // Synchronize livePending when initialPending changes
   useEffect(() => {
-    setLivePending(initialPending);
-  }, [initialPending]);
+    if (address) {
+      setLivePending(Math.min(initialPending, MAX_IDLE_COINS));
+    } else {
+      setLivePending(0);
+    }
+  }, [initialPending, address]);
 
-  // Live ticking counter
+  // Live ticking counter - ONLY tick if address is connected, and capped at 1000
   useEffect(() => {
+    if (!address) return; // Do not tick if user is not logged in
+
     const timer = setInterval(() => {
-      setLivePending((prev) => prev + miningRate);
+      setLivePending((prev) => Math.min(prev + miningRate, MAX_IDLE_COINS));
     }, 1000);
+
     return () => clearInterval(timer);
-  }, [miningRate]);
+  }, [address, miningRate]);
 
   const handleClaim = async () => {
     if (!address || isClaiming || livePending <= 0) return;
@@ -56,7 +86,7 @@ export const IdleCockpit: React.FC<IdleCockpitProps> = ({
       if (res.ok) {
         setLivePending(0);
         onClaimSuccess(data.player.coins, data.claimed);
-        setClaimToast(`+${data.claimed} 金幣已入帳！`);
+        setClaimToast(`+${data.claimed} 金幣已安全入帳！`);
         setTimeout(() => setClaimToast(null), 2500);
       }
     } catch (err) {
@@ -102,86 +132,207 @@ export const IdleCockpit: React.FC<IdleCockpitProps> = ({
     }
   };
 
+  const isCapped = livePending >= MAX_IDLE_COINS;
+  const progressPercent = Math.min(100, Math.round((livePending / MAX_IDLE_COINS) * 100));
+
   return (
     <div className="space-y-4 pb-20">
       {/* Toast Notification */}
       {claimToast && (
-        <div className="fixed top-20 left-1/2 -translate-x-1/2 z-50 px-4 py-2 rounded-full bg-neon-cyan/20 border border-neon-cyan text-neon-cyan text-xs font-mono font-bold tracking-wide shadow-[0_0_16px_rgba(0,240,255,0.4)] animate-bounce">
+        <div className="fixed top-16 left-1/2 -translate-x-1/2 z-50 bg-space-900 border-2 border-neon-cyan px-4 py-2 rounded-xl text-neon-cyan text-xs font-mono font-bold shadow-[0_0_20px_rgba(0,240,255,0.4)] animate-in fade-in slide-in-from-top-4 duration-200">
           ✨ {claimToast}
         </div>
       )}
 
-      {/* Main Reactor / Cockpit Card */}
-      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-b from-space-850 to-space-900 border border-space-700/80 p-5 shadow-2xl">
-        {/* Ambient neon backdrop glow */}
-        <div className="absolute -top-12 -right-12 w-44 h-44 rounded-full bg-neon-cyan/10 blur-3xl pointer-events-none" />
-        <div className="absolute -bottom-12 -left-12 w-44 h-44 rounded-full bg-purple-600/10 blur-3xl pointer-events-none" />
+      {/* Authenticated Commander Profile Card */}
+      {address && (
+        <div className="rounded-2xl bg-space-900/90 border border-space-800 p-3.5 flex items-center justify-between gap-3 shadow-md backdrop-blur-md">
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="w-10 h-10 rounded-xl bg-cyan-950/80 border border-cyan-500/40 flex items-center justify-center text-neon-cyan shadow-[0_0_10px_rgba(0,240,255,0.3)] shrink-0">
+              <User className="w-5 h-5" />
+            </div>
+            <div className="min-w-0">
+              <div className="flex items-center gap-1.5">
+                <span className="text-[10px] font-mono text-cyan-400 font-bold uppercase tracking-wider">
+                  艦隊指揮官
+                </span>
+                <span className="text-[9px] font-mono px-1.5 py-0.2 rounded bg-emerald-950/80 border border-emerald-500/40 text-emerald-400">
+                  ● 已認證
+                </span>
+              </div>
+              <h2 className="text-sm font-bold font-mono text-gray-100 truncate">
+                {playerName || `Captain_${address.slice(2, 6)}`}
+              </h2>
+            </div>
+          </div>
 
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 shadow-[0_0_8px_#10b981] animate-pulse" />
-            <h2 className="text-sm font-bold text-gray-200 uppercase tracking-wider">
-              深空採礦反應爐 (Reactor)
-            </h2>
-          </div>
-          <div className="flex items-center gap-1 text-[11px] font-mono text-cyan-400 bg-cyan-950/60 border border-cyan-500/30 px-2 py-0.5 rounded-full">
-            <TrendingUp className="w-3 h-3" />
-            <span>+{miningRate} 幣/秒</span>
-          </div>
+          <button
+            onClick={() => setIsRenameOpen(true)}
+            className="flex items-center gap-1 px-3 py-1.5 rounded-xl bg-space-850 hover:bg-space-800 border border-space-700/80 hover:border-cyan-500/40 text-xs font-mono text-cyan-300 transition-all active:scale-95 cursor-pointer shrink-0"
+            title="修改暱稱"
+          >
+            <Edit3 className="w-3.5 h-3.5" />
+            <span>改名</span>
+          </button>
         </div>
+      )}
 
-        {/* Reactor Core Animation */}
-        <div className="my-6 flex flex-col items-center justify-center relative">
-          <div className="w-36 h-36 rounded-full border-2 border-dashed border-neon-cyan/40 flex items-center justify-center animate-[spin_16s_linear_infinite]">
-            <div className="w-28 h-28 rounded-full border border-purple-500/50 flex items-center justify-center animate-[spin_8s_linear_infinite_reverse]">
-              <div className="w-20 h-20 rounded-full bg-gradient-to-tr from-cyan-500/20 via-purple-500/30 to-pink-500/20 backdrop-blur-sm border border-neon-cyan/60 flex items-center justify-center shadow-[0_0_24px_rgba(0,240,255,0.3)]">
-                <Pickaxe className="w-8 h-8 text-neon-cyan animate-pulse" />
+      {/* Main Mining Reactor Card */}
+      {!address ? (
+        /* Unauthenticated Standby Reactor Card */
+        <div className="relative overflow-hidden rounded-2xl bg-gradient-to-b from-space-900 via-space-950 to-space-950 border border-space-800 p-6 shadow-2xl text-center space-y-5">
+          {/* Top ambient glow */}
+          <div className="absolute top-0 left-1/4 right-1/4 h-[1px] bg-gradient-to-r from-transparent via-cyan-400 to-transparent" />
+
+          {/* Standby Reactor Emblem */}
+          <div className="relative w-36 h-36 mx-auto flex items-center justify-center">
+            {/* Concentric rings */}
+            <div className="absolute inset-0 rounded-full border border-space-700/50 border-dashed animate-[spin_30s_linear_infinite]" />
+            <div className="absolute inset-3 rounded-full border border-space-800" />
+            <div className="w-20 h-20 rounded-full bg-space-900 border border-space-700 flex items-center justify-center text-gray-500 shadow-inner">
+              <BatteryCharging className="w-9 h-9 animate-pulse text-cyan-400/60" />
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-space-850 border border-space-700 text-gray-400 text-xs font-mono">
+              <span className="w-2 h-2 rounded-full bg-amber-400/70" />
+              <span>採礦反應爐 · 待機休眠中 (STANDBY)</span>
+            </div>
+            <h3 className="text-base font-bold font-mono text-gray-100">
+              連線錢包以啟動反應爐
+            </h3>
+            <p className="text-xs text-gray-400 font-mono leading-relaxed max-w-xs mx-auto">
+              立即連線 0G 星際錢包以啟動自動採礦程序（每秒產出 +10 金幣），累積物資兌換深空探測券並挖掘 AI NFT 藏品！
+            </p>
+          </div>
+
+          {/* Connect Button */}
+          <button
+            onClick={onConnectWallet}
+            className="w-full py-3.5 rounded-xl bg-gradient-to-r from-neon-cyan via-cyan-400 to-blue-500 hover:from-cyan-300 hover:to-blue-400 text-black font-mono font-bold text-sm shadow-[0_0_25px_rgba(0,240,255,0.4)] active:scale-95 flex items-center justify-center gap-2 transition-all cursor-pointer"
+          >
+            <Wallet className="w-4 h-4 text-black" />
+            <span>連線錢包 · 啟動採礦反應爐</span>
+          </button>
+        </div>
+      ) : (
+        /* Authenticated Active Reactor Card */
+        <div className="relative overflow-hidden rounded-2xl bg-gradient-to-b from-space-850 via-space-900 to-space-950 border border-space-700/80 p-5 shadow-2xl space-y-4">
+          {/* Top header & Rate */}
+          <div className="flex items-center justify-between border-b border-space-800 pb-3">
+            <div className="flex items-center gap-2">
+              <div className="p-1.5 rounded-lg bg-cyan-950/80 border border-cyan-500/40 text-neon-cyan shadow-[0_0_8px_rgba(0,240,255,0.3)]">
+                <Pickaxe className="w-4 h-4" />
+              </div>
+              <div>
+                <h2 className="text-xs font-bold font-mono text-gray-200 uppercase tracking-wider">
+                  深空採礦反應爐 (Reactor)
+                </h2>
+                <span className="text-[10px] text-emerald-400 font-mono font-bold flex items-center gap-1">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping" />
+                  運轉中 · 效率 100%
+                </span>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-1 px-2.5 py-1 rounded-full bg-cyan-950/60 border border-cyan-500/40 text-cyan-300 text-xs font-mono font-semibold">
+              <TrendingUp className="w-3.5 h-3.5 text-neon-cyan" />
+              <span>+{miningRate} 幣/秒</span>
+            </div>
+          </div>
+
+          {/* Pending Coins Display */}
+          <div className="py-2 text-center space-y-2">
+            <p className="text-[11px] text-gray-400 font-mono tracking-wider uppercase">
+              待採集星際金幣 (Pending Pool)
+            </p>
+
+            <div className="flex items-center justify-center gap-2">
+              <div
+                className={`text-4xl font-black font-mono tracking-tight transition-colors ${
+                  isCapped ? "text-amber-300 drop-shadow-[0_0_15px_rgba(245,158,11,0.6)]" : "text-neon-cyan drop-shadow-[0_0_12px_rgba(0,240,255,0.6)]"
+                }`}
+              >
+                +{livePending.toLocaleString()}
+              </div>
+              <span className="text-xs font-mono text-gray-400 self-end mb-1">
+                / {MAX_IDLE_COINS}
+              </span>
+            </div>
+
+            {/* Capacity Progress Bar */}
+            <div className="space-y-1 pt-1">
+              <div className="w-full h-2 rounded-full bg-space-950 border border-space-800 overflow-hidden">
+                <div
+                  className={`h-full transition-all duration-500 rounded-full ${
+                    isCapped
+                      ? "bg-gradient-to-r from-amber-400 to-yellow-500 shadow-[0_0_10px_#f59e0b]"
+                      : "bg-gradient-to-r from-cyan-500 to-blue-500 shadow-[0_0_10px_#00f0ff]"
+                  }`}
+                  style={{ width: `${progressPercent}%` }}
+                />
+              </div>
+
+              <div className="flex items-center justify-between text-[10px] font-mono text-gray-400 px-0.5">
+                <span>儲能進度 {progressPercent}%</span>
+                <span className={isCapped ? "text-amber-400 font-bold" : "text-gray-400"}>
+                  {isCapped ? "⚡ 儲存池已滿載！" : `上限 ${MAX_IDLE_COINS} 金幣`}
+                </span>
               </div>
             </div>
           </div>
 
-          <div className="mt-4 text-center">
-            <p className="text-xs text-gray-400 font-mono flex items-center justify-center gap-1">
-              <Clock className="w-3 h-3" /> 待採集星際金幣
-            </p>
-            <div className="text-3xl font-black font-mono text-transparent bg-clip-text bg-gradient-to-r from-amber-300 via-yellow-200 to-amber-400 drop-shadow-[0_0_12px_rgba(245,158,11,0.5)]">
-              +{livePending.toLocaleString()}
-            </div>
-          </div>
+          {/* Claim Action Button */}
+          <button
+            onClick={handleClaim}
+            disabled={isClaiming || livePending <= 0}
+            className={`w-full py-3.5 rounded-xl font-mono font-bold text-xs uppercase tracking-wider transition-all flex items-center justify-center gap-2 active:scale-95 ${
+              livePending > 0
+                ? isCapped
+                  ? "bg-gradient-to-r from-amber-400 via-amber-500 to-yellow-500 hover:from-amber-300 hover:to-yellow-400 text-black shadow-[0_0_20px_rgba(245,158,11,0.5)] cursor-pointer"
+                  : "bg-gradient-to-r from-neon-cyan via-cyan-400 to-blue-500 hover:from-cyan-300 hover:to-blue-400 text-black shadow-[0_0_20px_rgba(0,240,255,0.4)] cursor-pointer"
+                : "bg-space-850 text-gray-500 border border-space-800 cursor-not-allowed"
+            }`}
+          >
+            <Sparkles className="w-4 h-4" />
+            <span>
+              {isClaiming
+                ? "採集中..."
+                : livePending > 0
+                ? isCapped
+                  ? "儲能已滿！立即收取金幣"
+                  : `收取採礦收益 (+${livePending.toLocaleString()} 金幣)`
+                : "採礦中，尚無可領取收益"}
+            </span>
+          </button>
         </div>
-
-        {/* Claim Button */}
-        <button
-          onClick={handleClaim}
-          disabled={livePending <= 0 || isClaiming || !address}
-          className="w-full py-3.5 rounded-xl font-bold font-mono text-sm tracking-wide transition-all shadow-lg active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed bg-gradient-to-r from-amber-500 via-yellow-500 to-amber-600 hover:from-amber-400 hover:to-yellow-400 text-black shadow-amber-500/20 flex items-center justify-center gap-2"
-        >
-          <Sparkles className="w-4 h-4" />
-          <span>{isClaiming ? "採集入帳中..." : "收取採礦收益 (Claim)"}</span>
-        </button>
-      </div>
+      )}
 
       {/* Ticket Exchange Station */}
       <div className="rounded-2xl bg-space-900 border border-space-800 p-4 space-y-3">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Ticket className="w-4 h-4 text-purple-400" />
-            <h3 className="text-xs font-bold text-gray-200 uppercase tracking-wider">
+            <h3 className="text-xs font-bold font-mono text-gray-200">
               深空探測券補給站
             </h3>
           </div>
-          <span className="text-[11px] font-mono text-gray-400">500 金幣 / 張</span>
+          <span className="text-[11px] font-mono text-gray-400">
+            {TICKET_PRICE} 金幣 / 張
+          </span>
         </div>
 
+        {/* Count Selector */}
         <div className="grid grid-cols-3 gap-2">
           {[1, 5, 10].map((num) => (
             <button
               key={num}
               onClick={() => setTicketCount(num)}
-              className={`py-2 px-3 rounded-lg text-xs font-mono font-bold border transition-all ${
+              className={`py-1.5 rounded-lg font-mono text-xs transition-all border ${
                 ticketCount === num
-                  ? "bg-purple-950/80 border-purple-500 text-purple-300 shadow-[0_0_10px_rgba(168,85,247,0.3)]"
-                  : "bg-space-850 border-space-700 text-gray-400 hover:bg-space-800"
+                  ? "bg-purple-950/80 border-purple-500/80 text-purple-300 shadow-[0_0_10px_rgba(168,85,247,0.3)] font-bold"
+                  : "bg-space-850 border-space-800 text-gray-400 hover:text-gray-200"
               }`}
             >
               {num} 張
@@ -189,15 +340,33 @@ export const IdleCockpit: React.FC<IdleCockpitProps> = ({
           ))}
         </div>
 
+        {/* Buy Action Button */}
         <button
           onClick={() => handleBuyTicket(ticketCount)}
-          disabled={coins < ticketCount * TICKET_PRICE || isBuying || !address}
-          className="w-full py-3 rounded-xl font-bold font-mono text-xs tracking-wide transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white shadow-[0_0_14px_rgba(147,51,234,0.3)] flex items-center justify-center gap-2"
+          disabled={!address || isBuying || coins < ticketCount * TICKET_PRICE}
+          className={`w-full py-2.5 rounded-xl font-mono text-xs font-semibold transition-all active:scale-95 ${
+            address && coins >= ticketCount * TICKET_PRICE
+              ? "bg-purple-600 hover:bg-purple-500 text-white shadow-[0_0_15px_rgba(168,85,247,0.4)] cursor-pointer"
+              : "bg-space-850 text-gray-500 border border-space-800 cursor-not-allowed"
+          }`}
         >
-          <Ticket className="w-4 h-4" />
-          <span>{isBuying ? "處理中..." : `花費 ${(ticketCount * TICKET_PRICE).toLocaleString()} 金幣購買 ${ticketCount} 張探測券`}</span>
+          {isBuying
+            ? "兌換中..."
+            : !address
+            ? "請先連線錢包以兌換物資"
+            : coins < ticketCount * TICKET_PRICE
+            ? `金幣不足 (需 ${(ticketCount * TICKET_PRICE).toLocaleString()} 金幣)`
+            : `花費 ${(ticketCount * TICKET_PRICE).toLocaleString()} 金幣購買 ${ticketCount} 張探測券`}
         </button>
       </div>
+
+      {/* Rename Modal */}
+      <RenameModal
+        isOpen={isRenameOpen}
+        currentName={playerName}
+        onClose={() => setIsRenameOpen(false)}
+        onSave={onRename}
+      />
     </div>
   );
 };

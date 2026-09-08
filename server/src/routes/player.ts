@@ -3,7 +3,8 @@ import { db } from "../db/index.js";
 import { players } from "../db/schema.js";
 import { eq } from "drizzle-orm";
 
-const COINS_PER_SECOND = 2; // 2 coins per second = 10 coins / 5s
+const COINS_PER_SECOND = 10; // 10 coins per second for fast testing & gameplay
+const MAX_IDLE_COINS = 1000; // Capped at 1000 coins maximum accumulation
 const MAX_OFFLINE_HOURS = 24;
 
 export async function playerRoutes(app: FastifyInstance) {
@@ -31,24 +32,26 @@ export async function playerRoutes(app: FastifyInstance) {
       player = newPlayer as any;
     }
 
-    // Calculate pending idle coins
+    // Calculate pending idle coins with max cap of 1000
     const now = Date.now();
     const lastClaim = new Date(player!.lastClaimAt).getTime();
     const elapsedSeconds = Math.min(
       Math.max(0, Math.floor((now - lastClaim) / 1000)),
       MAX_OFFLINE_HOURS * 3600
     );
-    const pendingCoins = elapsedSeconds * COINS_PER_SECOND;
+    const rawPending = elapsedSeconds * COINS_PER_SECOND;
+    const pendingCoins = Math.min(rawPending, MAX_IDLE_COINS);
 
     return {
       player,
       miningRate: COINS_PER_SECOND,
       pendingCoins,
+      maxIdleCoins: MAX_IDLE_COINS,
       elapsedSeconds,
     };
   });
 
-  // Claim idle coins
+  // Claim idle coins (capped at MAX_IDLE_COINS)
   app.post("/api/player/claim", async (req, reply) => {
     const { address } = req.body as { address?: string };
     if (!address) {
@@ -70,7 +73,8 @@ export async function playerRoutes(app: FastifyInstance) {
       Math.max(0, Math.floor((now - lastClaim) / 1000)),
       MAX_OFFLINE_HOURS * 3600
     );
-    const earnedCoins = elapsedSeconds * COINS_PER_SECOND;
+    const rawEarned = elapsedSeconds * COINS_PER_SECOND;
+    const earnedCoins = Math.min(rawEarned, MAX_IDLE_COINS);
 
     if (earnedCoins <= 0) {
       return { player, claimed: 0 };
@@ -94,6 +98,35 @@ export async function playerRoutes(app: FastifyInstance) {
         coins: newCoins,
         lastClaimAt: newLastClaim,
       },
+    };
+  });
+
+  // Update player custom nickname
+  app.post("/api/player/nickname", async (req, reply) => {
+    const { address, name } = req.body as { address?: string; name?: string };
+    if (!address || !name) {
+      return reply.status(400).send({ error: "Address and name are required" });
+    }
+
+    const trimmed = name.trim();
+    if (trimmed.length < 1 || trimmed.length > 24) {
+      return reply.status(400).send({ error: "暱稱長度需在 1 到 24 個字元之間" });
+    }
+
+    const cleanAddress = address.toLowerCase();
+    const [updated] = await db
+      .update(players)
+      .set({ name: trimmed })
+      .where(eq(players.walletAddress, cleanAddress))
+      .returning();
+
+    if (!updated) {
+      return reply.status(404).send({ error: "Player not found" });
+    }
+
+    return {
+      success: true,
+      player: updated,
     };
   });
 

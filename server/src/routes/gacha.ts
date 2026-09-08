@@ -5,8 +5,67 @@ import { eq } from "drizzle-orm";
 import { generateAILoreAndStats } from "../services/zerog-ai.js";
 import { uploadTo0GStorage } from "../services/zerog-storage.js";
 import { mintNFTToPlayer } from "../services/chain-minter.js";
+import { gachaQueue } from "../services/gacha-queue.js";
 
 export async function gachaRoutes(app: FastifyInstance) {
+  /**
+   * Non-blocking gacha draw queue:
+   * Deducts 1 ticket atomically, creates job in DB, and returns instantly (< 30ms).
+   */
+  app.post("/api/gacha/queue", async (req, reply) => {
+    const { address } = req.body as { address?: string };
+    if (!address) {
+      return reply.status(400).send({ error: "Address is required" });
+    }
+
+    const cleanAddress = address.toLowerCase();
+
+    try {
+      const result = await gachaQueue.enqueue(cleanAddress);
+      return {
+        success: true,
+        jobId: result.jobId,
+        remainingTickets: result.remainingTickets,
+        message: "探測任務已加入排程",
+      };
+    } catch (err: any) {
+      return reply.status(400).send({
+        error: err?.message || "Failed to enqueue gacha task",
+      });
+    }
+  });
+
+  /**
+   * Get active and recently completed jobs for the player
+   */
+  app.get("/api/gacha/jobs", async (req, reply) => {
+    const { address } = req.query as { address?: string };
+    if (!address) {
+      return reply.status(400).send({ error: "Address query parameter is required" });
+    }
+
+    const cleanAddress = address.toLowerCase();
+    const jobs = await gachaQueue.getPlayerJobs(cleanAddress);
+    return { jobs };
+  });
+
+  /**
+   * Acknowledge completed job (so it is not repeatedly shown to the user)
+   */
+  app.post("/api/gacha/ack", async (req, reply) => {
+    const { address, jobId } = req.body as { address?: string; jobId?: number };
+    if (!address || !jobId) {
+      return reply.status(400).send({ error: "Address and jobId are required" });
+    }
+
+    const cleanAddress = address.toLowerCase();
+    await gachaQueue.acknowledge(jobId, cleanAddress);
+    return { success: true };
+  });
+
+  /**
+   * Legacy synchronous draw endpoint (fallback)
+   */
   app.post("/api/gacha/draw", async (req, reply) => {
     const { address } = req.body as { address?: string };
     if (!address) {

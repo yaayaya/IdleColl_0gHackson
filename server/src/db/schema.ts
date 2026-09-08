@@ -31,3 +31,17 @@ export const collectibles = pgTable("collectibles", {
   mintStatus: text("mint_status").notNull().default("minted"), // pending, minted, failed
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
+
+export const gachaJobs = pgTable("gacha_jobs", {
+  id: serial("id").primaryKey(),
+  walletAddress: text("wallet_address").notNull().references(() => players.walletAddress),
+  status: text("status").notNull().default("queued"), // queued, processing, completed, failed
+  stepMessage: text("step_message").notNull().default("探測信號發射中..."),
+  collectibleId: integer("collectible_id"),
+  archetypeId: integer("archetype_id"),
+  error: text("error"),
+  acknowledged: integer("acknowledged").notNull().default(0), // 0: unviewed, 1: viewed
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  completedAt: timestamp("completed_at", { withTimezone: true }),
+});
+

@@ -1,10 +1,23 @@
 import React, { useState } from "react";
-import { Wallet, Coins, Ticket, Zap, AlertTriangle, CheckCircle2, LogOut, Copy, Check } from "lucide-react";
-import { ConnectWalletModal } from "./ConnectWalletModal.tsx";
+import {
+  Wallet,
+  Coins,
+  Ticket,
+  Zap,
+  AlertTriangle,
+  CheckCircle2,
+  LogOut,
+  Copy,
+  Check,
+  Radar,
+  Edit3,
+} from "lucide-react";
 import { useDialog } from "../context/DialogContext.tsx";
+import { useScannerQueue } from "../context/ScannerQueueContext.tsx";
 
 interface NavbarProps {
   address: string | null;
+  playerName?: string;
   balance0G: string;
   isCorrectNetwork: boolean;
   coins: number;
@@ -12,10 +25,12 @@ interface NavbarProps {
   connectWallet: () => void;
   disconnectWallet: () => void;
   switchNetwork: () => void;
+  onOpenRenameModal?: () => void;
 }
 
 export const Navbar: React.FC<NavbarProps> = ({
   address,
+  playerName,
   balance0G,
   isCorrectNetwork,
   coins,
@@ -23,23 +38,11 @@ export const Navbar: React.FC<NavbarProps> = ({
   connectWallet,
   disconnectWallet,
   switchNetwork,
+  onOpenRenameModal,
 }) => {
-  const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
   const [copied, setCopied] = useState<boolean>(false);
   const { showConfirm } = useDialog();
-
-  const handleConnectClick = () => {
-    const eth = typeof window !== "undefined" ? (window as any).ethereum : null;
-    const hasAuthenticExtension = Boolean(
-      eth && eth.isMetaMask && !eth._log
-    );
-
-    if (hasAuthenticExtension) {
-      connectWallet();
-    } else {
-      setIsModalOpen(true);
-    }
-  };
+  const { activeJobs } = useScannerQueue();
 
   const handleCopyAddress = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -63,6 +66,8 @@ export const Navbar: React.FC<NavbarProps> = ({
     });
   };
 
+  const displayName = playerName || (address ? `Captain_${address.slice(2, 6)}` : "Captain");
+
   return (
     <header className="sticky top-0 z-30 bg-space-950/90 backdrop-blur-md border-b border-space-800 px-4 py-2.5">
       {/* Top row: Brand & Wallet */}
@@ -78,6 +83,14 @@ export const Navbar: React.FC<NavbarProps> = ({
         </div>
 
         <div className="flex items-center gap-1.5">
+          {/* Active Scanner Chip */}
+          {activeJobs.length > 0 && (
+            <div className="hidden xs:flex items-center gap-1 px-2 py-0.5 rounded-full bg-cyan-950/80 border border-cyan-500/50 text-cyan-300 text-[10px] font-mono animate-pulse">
+              <Radar className="w-3 h-3 text-neon-cyan animate-spin" />
+              <span>探測中 ({activeJobs.length})</span>
+            </div>
+          )}
+
           {/* Network Switcher Pill */}
           {address && (
             isCorrectNetwork ? (
@@ -100,15 +113,17 @@ export const Navbar: React.FC<NavbarProps> = ({
           {address ? (
             <div className="flex items-center gap-1.5">
               <button
-                onClick={handleCopyAddress}
+                onClick={onOpenRenameModal || handleCopyAddress}
                 className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-space-900 hover:bg-space-850 border border-space-700 hover:border-cyan-500/40 text-xs font-mono transition-all active:scale-95 group"
-                title="點擊複製錢包完整地址"
+                title={onOpenRenameModal ? "點擊自訂艦長暱稱" : "點擊複製錢包完整地址"}
               >
                 <div className="w-2 h-2 rounded-full bg-neon-cyan shadow-[0_0_6px_#00f0ff]" />
-                <span className="text-gray-200 group-hover:text-cyan-300 transition-colors">
-                  Captain_{address.slice(2, 6)}
+                <span className="text-gray-200 group-hover:text-cyan-300 transition-colors truncate max-w-[110px] sm:max-w-[130px]">
+                  {displayName}
                 </span>
-                {copied ? (
+                {onOpenRenameModal ? (
+                  <Edit3 className="w-3 h-3 text-gray-500 group-hover:text-cyan-300 transition-colors" />
+                ) : copied ? (
                   <Check className="w-3 h-3 text-emerald-400" />
                 ) : (
                   <Copy className="w-3 h-3 text-gray-500 group-hover:text-gray-300 opacity-60 group-hover:opacity-100 transition-opacity" />
@@ -117,7 +132,7 @@ export const Navbar: React.FC<NavbarProps> = ({
 
               <button
                 onClick={handleDisconnectClick}
-                className="flex items-center gap-1 px-2 py-1.5 rounded-lg bg-space-900 hover:bg-rose-950/70 border border-space-700 hover:border-rose-500/50 text-gray-400 hover:text-rose-300 text-xs font-mono transition-all active:scale-95 group"
+                className="flex items-center gap-1 px-2 py-1.5 rounded-lg bg-space-900 hover:bg-rose-950/70 border border-space-700 hover:border-rose-500/50 text-gray-400 hover:text-rose-300 text-xs font-mono transition-all active:scale-95 group cursor-pointer"
                 title="登出錢包連線"
               >
                 <LogOut className="w-3.5 h-3.5 text-gray-400 group-hover:text-rose-400 group-hover:translate-x-0.5 transition-all" />
@@ -126,8 +141,8 @@ export const Navbar: React.FC<NavbarProps> = ({
             </div>
           ) : (
             <button
-              onClick={handleConnectClick}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-black font-semibold text-xs transition-all shadow-[0_0_12px_rgba(0,240,255,0.3)] active:scale-95"
+              onClick={connectWallet}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-black font-semibold text-xs transition-all shadow-[0_0_12px_rgba(0,240,255,0.3)] active:scale-95 cursor-pointer"
             >
               <Wallet className="w-3.5 h-3.5" />
               <span>連線錢包</span>
@@ -162,13 +177,6 @@ export const Navbar: React.FC<NavbarProps> = ({
           </div>
         </div>
       </div>
-
-      {/* Cross-Platform Connect Modal */}
-      <ConnectWalletModal
-        isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-        onConnectMetaMask={connectWallet}
-      />
     </header>
   );
 };

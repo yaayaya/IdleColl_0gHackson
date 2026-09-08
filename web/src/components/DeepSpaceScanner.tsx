@@ -1,82 +1,63 @@
 import React, { useState } from "react";
-import { Radar, Sparkles, ExternalLink, ShieldCheck, Database, Award, X } from "lucide-react";
+import {
+  Radar,
+  Sparkles,
+  Ticket,
+  BookOpen,
+  Layers,
+  Clock,
+  CheckCircle2,
+  Radio,
+  Cpu,
+  Database,
+  Link as ChainIcon,
+} from "lucide-react";
 import { useDialog } from "../context/DialogContext.tsx";
+import { useScannerQueue } from "../context/ScannerQueueContext.tsx";
 
 interface DeepSpaceScannerProps {
   address: string | null;
   tickets: number;
   onDrawSuccess: (newTickets: number) => void;
   onViewCodex: () => void;
+  onConnectWallet?: () => void;
 }
 
 export const DeepSpaceScanner: React.FC<DeepSpaceScannerProps> = ({
   address,
   tickets,
-  onDrawSuccess,
   onViewCodex,
+  onConnectWallet,
 }) => {
-  const { showError } = useDialog();
-  const [isScanning, setIsScanning] = useState<boolean>(false);
-  const [scanStep, setScanStep] = useState<string>("連接 0G 網路中...");
-  const [revealedItem, setRevealedItem] = useState<any | null>(null);
+  const { showError, showWarning } = useDialog();
+  const { activeJobs, enqueueScan, openJobReveal } = useScannerQueue();
+  const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
 
-  const handleScan = async () => {
-    if (!address || tickets < 1 || isScanning) return;
+  const isScanning = activeJobs.length > 0;
+
+  const handleStartScan = async () => {
+    if (!address) {
+      if (onConnectWallet) onConnectWallet();
+      return;
+    }
+    if (tickets < 1) {
+      showWarning(
+        "艦隊探測券已耗盡！\n\n請前往「採礦艙」透過金幣兌換探測券，或等待採礦反應爐產出足夠金幣後再次補給。",
+        "探測物資告罄"
+      );
+      return;
+    }
 
     try {
-      setIsScanning(true);
-      setRevealedItem(null);
-
-      if (typeof navigator !== "undefined" && navigator.vibrate) {
-        navigator.vibrate([15, 50, 15]);
+      setIsSubmitting(true);
+      const res = await enqueueScan();
+      if (!res.success) {
+        showError(res.error || "探測任務調度異常，請稍後再試！", "調度失敗");
       }
-
-      // Animated steps
-      setScanStep("📡 調度 0G Serving AI 引擎...");
-      const step1 = setTimeout(() => setScanStep("🧬 解算藏品專屬傳奇背景與詞條..."), 600);
-      const step2 = setTimeout(() => setScanStep("📦 永久封存 Metadata 至 0G Storage..."), 1200);
-      const step3 = setTimeout(() => setScanStep("⛓️ 0G Galileo 區塊鏈代付鑄造 NFT..."), 1800);
-
-      const res = await fetch("/api/gacha/draw", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ address }),
-      });
-
-      clearTimeout(step1);
-      clearTimeout(step2);
-      clearTimeout(step3);
-
-      const data = await res.json();
-      if (res.ok && data.success) {
-        onDrawSuccess(data.remainingTickets);
-        setTimeout(() => {
-          setIsScanning(false);
-          setRevealedItem(data);
-          if (typeof navigator !== "undefined" && navigator.vibrate) {
-            navigator.vibrate([40, 80, 60]);
-          }
-        }, 600);
-      } else {
-        showError(data.error || "探測雷達受干擾，請確認探測券餘額！", "深空探測異常");
-        setIsScanning(false);
-      }
-    } catch (err) {
-      console.error("Gacha draw error:", err);
-      setIsScanning(false);
-    }
-  };
-
-  const getRarityBadge = (rarity: string) => {
-    switch (rarity) {
-      case "Legendary":
-        return "bg-amber-500/20 text-amber-300 border-amber-500/60 shadow-[0_0_12px_rgba(245,158,11,0.4)]";
-      case "Epic":
-        return "bg-pink-500/20 text-pink-300 border-pink-500/60 shadow-[0_0_12px_rgba(236,72,153,0.4)]";
-      case "Rare":
-        return "bg-purple-500/20 text-purple-300 border-purple-500/60 shadow-[0_0_10px_rgba(168,85,247,0.3)]";
-      default:
-        return "bg-cyan-500/20 text-cyan-300 border-cyan-500/40";
+    } catch (err: any) {
+      showError(err?.message || "網路連線異常", "通訊錯誤");
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -85,7 +66,7 @@ export const DeepSpaceScanner: React.FC<DeepSpaceScannerProps> = ({
       {/* Scanner Radar Interface */}
       <div className="relative overflow-hidden rounded-2xl bg-gradient-to-b from-space-850 via-space-900 to-space-950 border border-space-700/80 p-5 shadow-2xl flex flex-col items-center text-center">
         {/* Radar concentric circles */}
-        <div className="relative w-60 h-60 my-4 flex items-center justify-center">
+        <div className="relative w-56 h-56 my-3 flex items-center justify-center">
           <div className="absolute inset-0 rounded-full border border-cyan-500/20" />
           <div className="absolute inset-6 rounded-full border border-cyan-500/25" />
           <div className="absolute inset-14 rounded-full border border-cyan-500/35" />
@@ -99,148 +80,136 @@ export const DeepSpaceScanner: React.FC<DeepSpaceScannerProps> = ({
           {isScanning ? (
             <div className="absolute inset-0 rounded-full bg-[conic-gradient(from_0deg,transparent_0_300deg,rgba(0,240,255,0.4)_360deg)] animate-[spin_1.5s_linear_infinite]" />
           ) : (
-            <div className="absolute inset-0 rounded-full bg-[conic-gradient(from_0deg,transparent_0_320deg,rgba(0,240,255,0.15)_360deg)] animate-[spin_6s_linear_infinite]" />
+            <div className="absolute inset-0 rounded-full bg-[conic-gradient(from_0deg,transparent_0_330deg,rgba(0,240,255,0.15)_360deg)] animate-[spin_6s_linear_infinite]" />
           )}
 
-          {/* Center core */}
-          <div className="relative z-10 w-16 h-16 rounded-full bg-space-900 border-2 border-neon-cyan flex items-center justify-center shadow-[0_0_20px_rgba(0,240,255,0.5)]">
-            <Radar className={`w-8 h-8 text-neon-cyan ${isScanning ? "animate-spin" : ""}`} />
+          {/* Center radar emitter */}
+          <div className="relative z-10 w-14 h-14 rounded-full bg-space-900 border-2 border-neon-cyan flex items-center justify-center shadow-[0_0_20px_rgba(0,240,255,0.5)]">
+            <Radar
+              className={`w-7 h-7 text-neon-cyan ${
+                isScanning ? "animate-spin" : "animate-pulse"
+              }`}
+            />
           </div>
         </div>
 
-        {/* Status text */}
-        <div className="min-h-12 flex flex-col items-center justify-center mb-2">
-          {isScanning ? (
-            <div className="flex flex-col items-center gap-1 animate-pulse">
-              <span className="text-xs font-mono font-bold text-neon-cyan">{scanStep}</span>
-              <span className="text-[10px] text-gray-400 font-mono">0G Galileo Testnet 16602</span>
-            </div>
-          ) : (
-            <div className="space-y-0.5">
-              <h3 className="text-sm font-bold text-gray-200 uppercase tracking-wider">
-                深空探測矩陣已就緒
-              </h3>
-              <p className="text-[11px] text-gray-400 font-mono">
-                當前可用：<span className="text-purple-300 font-bold">{tickets}</span> 張探測券
-              </p>
-            </div>
-          )}
+        {/* Dynamic Scan Status Bar */}
+        <div className="space-y-1 my-2">
+          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-space-850 border border-space-700 text-xs font-mono">
+            <span
+              className={`w-2 h-2 rounded-full ${
+                isScanning
+                  ? "bg-neon-cyan shadow-[0_0_8px_#00f0ff] animate-ping"
+                  : "bg-emerald-400"
+              }`}
+            />
+            <span className="text-gray-300">
+              {isScanning
+                ? `探測任務進行中 (${activeJobs.length} 個排程)`
+                : "深空雷達待命中 · 隨時可啟動"}
+            </span>
+          </div>
+
+          <p className="text-xs text-gray-400 font-mono">
+            {isScanning
+              ? "🚀 任務於背景非同步執行，您可自由切換其他頁面"
+              : "探測深空星域，解鎖由 0G AI 生成並上鏈的星際藏品"}
+          </p>
         </div>
 
-        {/* Scan button */}
-        <button
-          onClick={handleScan}
-          disabled={tickets < 1 || isScanning || !address}
-          className="w-full py-3.5 rounded-xl font-bold font-mono text-sm tracking-wide transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed bg-gradient-to-r from-neon-cyan via-blue-500 to-purple-600 hover:from-cyan-400 hover:to-purple-500 text-black shadow-[0_0_20px_rgba(0,240,255,0.3)] flex items-center justify-center gap-2"
-        >
-          <Sparkles className="w-4 h-4" />
-          <span>{isScanning ? "探測生成中..." : "掃描深空 (消耗 1 張探測券)"}</span>
-        </button>
+        {/* Action Button: Instant Queue */}
+        <div className="w-full space-y-2 mt-2">
+          <button
+            onClick={handleStartScan}
+            disabled={isSubmitting || (Boolean(address) && tickets < 1)}
+            className={`w-full py-3.5 rounded-xl font-mono font-bold text-xs uppercase tracking-wider transition-all flex items-center justify-center gap-2 active:scale-95 ${
+              !address
+                ? "bg-gradient-to-r from-neon-cyan via-cyan-400 to-blue-500 hover:from-cyan-300 hover:to-blue-400 text-black shadow-[0_0_20px_rgba(0,240,255,0.4)] cursor-pointer"
+                : tickets >= 1
+                ? "bg-gradient-to-r from-neon-cyan via-cyan-400 to-blue-500 hover:from-cyan-300 hover:to-blue-400 text-black shadow-[0_0_20px_rgba(0,240,255,0.4)] cursor-pointer"
+                : "bg-space-850 text-gray-500 border border-space-800 cursor-not-allowed"
+            }`}
+          >
+            <Sparkles className="w-4 h-4" />
+            <span>
+              {!address
+                ? "連線錢包以啟動探測"
+                : isSubmitting
+                ? "調度排程中..."
+                : tickets >= 1
+                ? `啟動深空探測 (消耗 1 張券 · 剩餘 ${tickets} 張)`
+                : "探測券不足 (請至採礦艙補給)"}
+            </span>
+          </button>
+        </div>
       </div>
 
-      {/* Reveal Modal */}
-      {revealedItem && (
-        <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-4">
-          <div className="relative w-full max-w-sm rounded-2xl bg-space-900 border-2 border-neon-cyan p-5 shadow-[0_0_35px_rgba(0,240,255,0.4)] animate-in fade-in zoom-in-95 duration-200">
-            {/* Close button */}
-            <button
-              onClick={() => setRevealedItem(null)}
-              className="absolute top-3 right-3 p-1.5 rounded-full bg-space-800 text-gray-400 hover:text-white"
-            >
-              <X className="w-4 h-4" />
-            </button>
-
-            {/* Rarity & Title */}
-            <div className="flex items-center justify-between gap-2 mb-3">
-              <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-mono font-bold border uppercase ${getRarityBadge(revealedItem.archetype.rarity)}`}>
-                {revealedItem.archetype.rarity}
-              </span>
-              <span className="text-[10px] font-mono text-gray-400">
-                Token #{revealedItem.collectible.tokenId || "1"}
-              </span>
-            </div>
-
-            {/* Collectible Art */}
-            <div className="w-full aspect-square rounded-xl bg-space-950/80 border border-space-700/60 p-4 flex items-center justify-center mb-3 shadow-inner">
-              <img
-                src={revealedItem.archetype.baseImage?.replace(".png", ".svg")}
-                alt={revealedItem.collectible.aiTitle}
-                className="max-w-full max-h-full drop-shadow-[0_0_16px_rgba(0,240,255,0.3)] object-contain"
-              />
-            </div>
-
-            {/* AI Generated Content */}
-            <div className="space-y-2 text-left">
-              <h3 className="text-base font-bold text-gray-100 font-mono tracking-tight leading-snug">
-                {revealedItem.collectible.aiTitle}
+      {/* Active Jobs Queue Live Readout */}
+      {activeJobs.length > 0 && (
+        <div className="rounded-2xl bg-space-900 border border-cyan-500/40 p-4 space-y-3 shadow-lg animate-in fade-in duration-200">
+          <div className="flex items-center justify-between border-b border-space-800 pb-2">
+            <div className="flex items-center gap-2">
+              <Radio className="w-4 h-4 text-neon-cyan animate-pulse" />
+              <h3 className="text-xs font-bold font-mono text-gray-100 uppercase tracking-wider">
+                探測任務非同步佇列 ({activeJobs.length})
               </h3>
-              <p className="text-xs text-gray-300 leading-relaxed bg-space-850/80 p-2.5 rounded-lg border border-space-700/50">
-                {revealedItem.collectible.aiLore}
-              </p>
+            </div>
+            <span className="text-[10px] font-mono text-cyan-400">背景處理中</span>
+          </div>
 
-              {/* Stats Grid */}
-              <div className="grid grid-cols-2 gap-2 text-[11px] font-mono">
-                <div className="bg-space-800/60 p-2 rounded border border-space-700">
-                  <span className="text-gray-400 block text-[9px]">專屬特性</span>
-                  <span className="text-purple-300 font-semibold">{revealedItem.collectible.aiStats?.specialTrait}</span>
-                </div>
-                <div className="bg-space-800/60 p-2 rounded border border-space-700">
-                  <span className="text-gray-400 block text-[9px]">深空幸運值</span>
-                  <span className="text-cyan-300 font-semibold">{revealedItem.collectible.aiStats?.luck} / 100</span>
-                </div>
-              </div>
-
-              {/* 0G Storage & Chain Badges */}
-              <div className="space-y-1.5 pt-2 border-t border-space-800 text-[10px] font-mono">
-                <div className="flex items-center justify-between text-gray-400">
-                  <span className="flex items-center gap-1">
-                    <Database className="w-3 h-3 text-cyan-400" /> 0G Storage:
+          <div className="space-y-2.5">
+            {activeJobs.map((job, idx) => (
+              <div
+                key={job.id}
+                className="rounded-xl bg-space-950/80 border border-space-800 p-3 space-y-2 text-left"
+              >
+                <div className="flex items-center justify-between text-[11px] font-mono">
+                  <span className="font-bold text-cyan-300">
+                    探測任務 #{job.id} {idx === 0 ? "【處理中】" : "【佇列中】"}
                   </span>
-                  <span className="text-cyan-300 truncate max-w-[170px]" title={revealedItem.collectible.storageHash}>
-                    {revealedItem.collectible.storageHash}
+                  <span className="text-[10px] text-gray-400">
+                    {job.status === "processing" ? "進行中" : "等待調度"}
                   </span>
                 </div>
-                {revealedItem.collectible.txHash && (
-                  <div className="flex items-center justify-between text-gray-400">
-                    <span className="flex items-center gap-1">
-                      <ShieldCheck className="w-3 h-3 text-emerald-400" /> 0G Chain Tx:
-                    </span>
-                    <a
-                      href={`https://chainscan-galileo.0g.ai/tx/${revealedItem.collectible.txHash}`}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="text-emerald-300 hover:underline flex items-center gap-0.5"
-                    >
-                      <span>{revealedItem.collectible.txHash.slice(0, 10)}...</span>
-                      <ExternalLink className="w-2.5 h-2.5" />
-                    </a>
-                  </div>
-                )}
-              </div>
-            </div>
 
-            {/* Action buttons */}
-            <div className="mt-4 flex gap-2">
-              <button
-                onClick={() => setRevealedItem(null)}
-                className="flex-1 py-2.5 rounded-xl bg-space-800 hover:bg-space-700 text-gray-200 text-xs font-mono font-bold"
-              >
-                收下藏品
-              </button>
-              <button
-                onClick={() => {
-                  setRevealedItem(null);
-                  onViewCodex();
-                }}
-                className="flex-1 py-2.5 rounded-xl bg-neon-cyan hover:bg-cyan-400 text-black text-xs font-mono font-bold flex items-center justify-center gap-1"
-              >
-                <Award className="w-3.5 h-3.5" />
-                <span>前往圖鑑</span>
-              </button>
-            </div>
+                <div className="flex items-center gap-2 text-xs font-mono text-gray-200">
+                  <div className="w-2 h-2 rounded-full bg-cyan-400 animate-ping" />
+                  <span className="truncate">{job.stepMessage}</span>
+                </div>
+
+                {/* Progress bar animation */}
+                <div className="w-full h-1.5 rounded-full bg-space-900 overflow-hidden">
+                  <div className="h-full bg-gradient-to-r from-neon-cyan to-blue-500 rounded-full animate-pulse w-3/4" />
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <div className="p-2.5 rounded-xl bg-space-950/60 border border-space-800/80 text-[11px] font-mono text-gray-400 leading-relaxed">
+            💡 探測任務包含 0G Serving AI 運算、0G 去中心化存儲與 0G 區塊鏈代付鑄造。您可以切換至其他分頁，完成時將自動跳出通知！
           </div>
         </div>
       )}
+
+      {/* Quick Navigation Card */}
+      <div className="rounded-2xl bg-space-900 border border-space-800 p-4 flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <div className="w-9 h-9 rounded-xl bg-space-850 border border-space-750 flex items-center justify-center text-cyan-400">
+            <BookOpen className="w-4 h-4" />
+          </div>
+          <div>
+            <h4 className="text-xs font-bold font-mono text-gray-200">查看已解鎖藏品</h4>
+            <p className="text-[10px] text-gray-400 font-mono">前往星際圖鑑矩陣檢視所有 AI 變體</p>
+          </div>
+        </div>
+
+        <button
+          onClick={onViewCodex}
+          className="px-3.5 py-2 rounded-xl bg-space-850 hover:bg-space-800 border border-space-700 text-cyan-300 font-mono text-xs font-semibold active:scale-95 transition-all"
+        >
+          進入圖鑑
+        </button>
+      </div>
     </div>
   );
 };
