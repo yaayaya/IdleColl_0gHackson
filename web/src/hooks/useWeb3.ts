@@ -10,7 +10,10 @@ const ZEROG_CONFIG = {
   chainId: ZEROG_CHAIN_ID_HEX,
   chainName: "0G Galileo Testnet",
   nativeCurrency: { name: "0G", symbol: "0G", decimals: 18 },
-  rpcUrls: ["https://evmrpc-testnet.0g.ai"],
+  rpcUrls: [
+    "https://evmrpc-testnet.0g.ai",
+    "https://16602.rpc.thirdweb.com",
+  ],
   blockExplorerUrls: ["https://chainscan-galileo.0g.ai"],
 };
 
@@ -98,27 +101,37 @@ export function useWeb3() {
     if (!eth) return;
 
     try {
-      // 1. Try wallet_addEthereumChain first to ensure native currency symbol is '0G'
+      // 1. Standard EIP-3326: Try switching to 0G chain first
       await eth.request({
-        method: "wallet_addEthereumChain",
-        params: [ZEROG_CONFIG],
+        method: "wallet_switchEthereumChain",
+        params: [{ chainId: ZEROG_CHAIN_ID_HEX }],
       });
       setIsCorrectNetwork(true);
       if (address && provider) {
         updateBalance(address, provider);
       }
-    } catch (addError: any) {
-      // 2. Fallback to switchEthereumChain if already exists or wallet rejects add
-      try {
-        await eth.request({
-          method: "wallet_switchEthereumChain",
-          params: [{ chainId: ZEROG_CHAIN_ID_HEX }],
-        });
-        setIsCorrectNetwork(true);
-        if (address && provider) {
-          updateBalance(address, provider);
+    } catch (switchError: any) {
+      // 2. Fallback: If chain is not added yet (code 4902), request to add it
+      const isUnrecognized =
+        switchError?.code === 4902 ||
+        switchError?.data?.originalError?.code === 4902 ||
+        switchError?.error?.code === 4902 ||
+        /unrecognized|not found|4902/i.test(switchError?.message || "");
+
+      if (isUnrecognized) {
+        try {
+          await eth.request({
+            method: "wallet_addEthereumChain",
+            params: [ZEROG_CONFIG],
+          });
+          setIsCorrectNetwork(true);
+          if (address && provider) {
+            updateBalance(address, provider);
+          }
+        } catch (addError: any) {
+          console.error("Failed to add 0G network:", addError);
         }
-      } catch (switchError: any) {
+      } else {
         console.error("Failed to switch to 0G network:", switchError);
       }
     }
