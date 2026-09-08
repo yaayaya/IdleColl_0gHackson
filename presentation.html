@@ -52,7 +52,7 @@
     .slide {
       position: absolute;
       inset: 0;
-      padding: 44px 72px 84px 72px;
+      padding: 36px 64px 76px 64px;
       display: flex;
       flex-direction: column;
       justify-content: center;
@@ -69,7 +69,7 @@
     }
 
     .title-box {
-      margin-bottom: 24px;
+      margin-bottom: 20px;
     }
 
     .badge-tag {
@@ -103,7 +103,7 @@
     }
 
     .slide-desc {
-      font-size: 1.18rem;
+      font-size: 1.15rem;
       color: var(--muted);
       margin-top: 4px;
     }
@@ -112,21 +112,21 @@
     .grid-2 {
       display: grid;
       grid-template-columns: 1fr 1fr;
-      gap: 36px;
+      gap: 32px;
       align-items: stretch;
     }
 
     .grid-3 {
       display: grid;
       grid-template-columns: repeat(3, 1fr);
-      gap: 26px;
+      gap: 24px;
       align-items: stretch;
     }
 
     .grid-4 {
       display: grid;
       grid-template-columns: repeat(4, 1fr);
-      gap: 20px;
+      gap: 18px;
       align-items: stretch;
     }
 
@@ -135,7 +135,7 @@
       background: var(--card-bg);
       border: 1px solid var(--border);
       border-radius: 20px;
-      padding: 28px 26px;
+      padding: 26px 24px;
       display: flex;
       flex-direction: column;
       justify-content: center;
@@ -332,63 +332,63 @@
       line-height: 1.5;
     }
 
-    /* Phone Mockups (Slide 5) */
-    .mockup-card {
-      background: #090e1a;
-      border: 1.5px solid rgba(0, 240, 255, 0.3);
-      border-radius: 22px;
-      padding: 16px 14px;
+    /* Real Playwright Captured Phones (Slide 5) */
+    .real-phone-card {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      padding: 12px 10px;
       display: flex;
       flex-direction: column;
-      position: relative;
-      box-shadow: 0 12px 35px rgba(0, 0, 0, 0.6), inset 0 0 20px rgba(0, 240, 255, 0.05);
-      overflow: hidden;
-    }
-
-    .mockup-header {
-      display: flex;
       align-items: center;
-      justify-content: space-between;
-      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-      padding-bottom: 10px;
-      margin-bottom: 12px;
+      transition: all 0.25s ease;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.5);
     }
 
-    .mockup-header-title {
-      font-size: 0.95rem;
+    .real-phone-card:hover {
+      transform: translateY(-6px);
+      border-color: var(--cyan);
+      box-shadow: 0 15px 35px rgba(0, 240, 255, 0.25);
+    }
+
+    .phone-label {
+      font-size: 1.05rem;
       font-weight: 800;
       color: #fff;
+      margin-bottom: 2px;
       display: flex;
       align-items: center;
       gap: 6px;
     }
 
-    .mockup-body {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-      justify-content: space-between;
-      gap: 10px;
-    }
-
-    .mockup-chip {
-      background: rgba(255, 255, 255, 0.05);
-      border: 1px solid rgba(255, 255, 255, 0.1);
-      border-radius: 10px;
-      padding: 8px 10px;
-      font-size: 0.8rem;
-      color: #cbd5e1;
-      line-height: 1.4;
-    }
-
-    .mockup-badge {
-      font-size: 0.7rem;
-      font-weight: 800;
-      padding: 2px 6px;
-      border-radius: 4px;
+    .phone-sub {
+      font-size: 0.72rem;
       color: var(--cyan);
-      background: rgba(0, 240, 255, 0.15);
-      display: inline-block;
+      font-weight: 600;
+      margin-bottom: 8px;
+      letter-spacing: 0.5px;
+    }
+
+    .phone-frame {
+      width: 100%;
+      border-radius: 12px;
+      overflow: hidden;
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      background: #000;
+      box-shadow: inset 0 0 10px rgba(0,0,0,0.8);
+    }
+
+    .phone-frame img {
+      width: 100%;
+      height: 440px;
+      object-fit: cover;
+      object-position: top center;
+      display: block;
+      transition: transform 0.3s ease;
+    }
+
+    .real-phone-card:hover .phone-frame img {
+      transform: scale(1.02);
     }
 
     /* 12 Items Showcase */
@@ -472,7 +472,7 @@
     /* Bottom Status Controls */
     #status-bar {
       position: absolute;
-      bottom: 18px;
+      bottom: 16px;
       left: 60px;
       right: 60px;
       display: flex;
@@ -663,107 +663,48 @@
       </div>
     </div>
 
-    <!-- SLIDE 5: 實機遊玩畫面 (NEW!) -->
+    <!-- SLIDE 5: 實機遊玩畫面 (PLAYWRIGHT CAPTURED) -->
     <div class="slide" id="s5">
       <div class="title-box">
-        <div class="badge-tag">Actual Gameplay UI</div>
+        <div class="badge-tag">Playwright Live Captured UI</div>
         <h1 class="slide-title">實機畫面：<span>4 大直式手遊沉浸介面</span></h1>
-        <div class="slide-desc">100% 完整開發與部署，真實運行於 0G Galileo 測試網</div>
+        <div class="slide-desc">Playwright 實機擷取，真實運行於 0G Galileo 測試網</div>
       </div>
 
-      <div class="grid-4">
-        <!-- Mockup 1: 駕駛艙 -->
-        <div class="mockup-card">
-          <div class="mockup-header">
-            <span class="mockup-header-title">🚀 採礦駕駛艙</span>
-            <span class="mockup-badge">Cockpit</span>
-          </div>
-          <div class="mockup-body">
-            <div style="text-align: center; padding: 12px 0;">
-              <div style="font-size: 2.4rem; animation: float 3s ease-in-out infinite;">⚡</div>
-              <div style="font-size: 1.1rem; font-weight: 800; color: #fff; margin-top: 4px;">反應爐產能運轉中</div>
-              <div style="color: var(--cyan); font-weight: bold; font-size: 0.9rem;">+14.5 金幣 / 秒</div>
-            </div>
-            <div class="mockup-chip">
-              <strong style="color: var(--amber);">艦隊 Buff 生效中：</strong><br>
-              • 曲率核心共振 (+3.5/s)<br>
-              • 深空引力透鏡 (容量 +350)<br>
-              • 艦隊爆擊幸運: 82%
-            </div>
-            <div class="mockup-chip" style="background: rgba(0, 240, 255, 0.1); border-color: rgba(0, 240, 255, 0.3); text-align: center; font-weight: bold; color: #fff;">
-              收取金幣 ＆ 兌換探測券
-            </div>
+      <div class="grid-4" style="align-items: center;">
+        <!-- Screen 1: 駕駛艙 -->
+        <div class="real-phone-card">
+          <div class="phone-label">🚀 採礦駕駛艙</div>
+          <div class="phone-sub">產能即時反哺 ＋ 艦隊 Buff</div>
+          <div class="phone-frame">
+            <img src="web/public/screen_cockpit.png" alt="採礦艙實機畫面">
           </div>
         </div>
 
-        <!-- Mockup 2: 深空抽卡 -->
-        <div class="mockup-card">
-          <div class="mockup-header">
-            <span class="mockup-header-title">📡 深空掃描 ＆ 翻卡</span>
-            <span class="mockup-badge">Scanner</span>
-          </div>
-          <div class="mockup-body">
-            <div style="text-align: center; padding: 10px 0;">
-              <div style="font-size: 2.2rem;">🃏</div>
-              <div style="font-size: 1rem; font-weight: 800; color: #fff; margin-top: 4px;">探測成功！請手動揭曉</div>
-              <div style="color: var(--purple); font-size: 0.8rem;">2-Job 異步隊列保護</div>
-            </div>
-            <div class="mockup-chip" style="border-color: rgba(245, 158, 11, 0.4); background: rgba(245, 158, 11, 0.08);">
-              <div style="color: var(--amber); font-weight: bold; font-size: 0.85rem;">✨ 獲得：月球突變兔 #882</div>
-              <div style="font-size: 0.75rem; color: #cbd5e1; margin-top: 3px;">0G AI 賦予稱號：「被反物質浸潤的」</div>
-            </div>
-            <div class="mockup-chip" style="background: linear-gradient(135deg, rgba(168,85,247,0.3), rgba(0,240,255,0.3)); border-color: var(--cyan); text-align: center; font-weight: bold; color: #fff;">
-              點擊揭曉金色卡牌 🎴
-            </div>
+        <!-- Screen 2: 抽卡與翻卡 -->
+        <div class="real-phone-card">
+          <div class="phone-label">📡 深空探測 ＆ 翻卡</div>
+          <div class="phone-sub">AI 詞條手動揭曉 ＋ 0G Hash</div>
+          <div class="phone-frame">
+            <img src="web/public/screen_scanner.png" alt="深空抽卡實機畫面">
           </div>
         </div>
 
-        <!-- Mockup 3: 星際圖鑑 -->
-        <div class="mockup-card">
-          <div class="mockup-header">
-            <span class="mockup-header-title">📖 星際 12 格圖鑑</span>
-            <span class="mockup-badge">Codex</span>
-          </div>
-          <div class="mockup-body">
-            <div style="text-align: center; padding: 10px 0;">
-              <div style="font-size: 2.2rem;">🌌</div>
-              <div style="font-size: 1rem; font-weight: 800; color: #fff; margin-top: 4px;">收集進度：8 / 12</div>
-              <div style="color: var(--green); font-size: 0.8rem; font-weight: bold;">點亮解鎖 66%</div>
-            </div>
-            <div class="mockup-chip">
-              <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; text-align: center; font-size: 1.1rem;">
-                <span>🍜</span><span>🐰</span><span>🪴</span><span>🛸</span>
-                <span>🚽</span><span>🧊</span><span>📻</span><span>☕</span>
-              </div>
-            </div>
-            <div class="mockup-chip" style="text-align: center; font-size: 0.75rem; color: var(--muted);">
-              點擊任意格子檢視 0g:// 永存 Hash
-            </div>
+        <!-- Screen 3: 圖鑑矩陣 -->
+        <div class="real-phone-card">
+          <div class="phone-label">📖 星際圖鑑矩陣</div>
+          <div class="phone-sub">12 格點亮 ＋ 0g:// 永存存證</div>
+          <div class="phone-frame">
+            <img src="web/public/screen_codex.png" alt="星際圖鑑實機畫面">
           </div>
         </div>
 
-        <!-- Mockup 4: 拍賣行 -->
-        <div class="mockup-card">
-          <div class="mockup-header">
-            <span class="mockup-header-title">💎 0G 原生拍賣行</span>
-            <span class="mockup-badge">Market</span>
-          </div>
-          <div class="mockup-body">
-            <div style="text-align: center; padding: 10px 0;">
-              <div style="font-size: 2.2rem;">🏛️</div>
-              <div style="font-size: 1rem; font-weight: 800; color: #fff; margin-top: 4px;">0G 原生幣原子結算</div>
-              <div style="color: var(--amber); font-size: 0.8rem;">支援多維篩選與全息透視</div>
-            </div>
-            <div class="mockup-chip">
-              <div style="display: flex; justify-content: space-between; align-items: center;">
-                <span style="font-weight: bold; color: #fff;">創世晶片 #101</span>
-                <span style="color: var(--amber); font-weight: bold;">0.05 0G</span>
-              </div>
-              <div style="font-size: 0.75rem; color: var(--cyan); margin-top: 2px;">✔ 全息詞條檢驗完畢</div>
-            </div>
-            <div class="mockup-chip" style="background: rgba(245, 158, 11, 0.15); border-color: var(--amber); text-align: center; font-weight: bold; color: var(--amber);">
-              原生 0G 幣一鍵購買
-            </div>
+        <!-- Screen 4: 0G 拍賣行 -->
+        <div class="real-phone-card">
+          <div class="phone-label">💎 0G 原生拍賣行</div>
+          <div class="phone-sub">全息詞條透視鏡 ＋ 0G 原生結算</div>
+          <div class="phone-frame">
+            <img src="web/public/screen_market.png" alt="拍賣行實機畫面">
           </div>
         </div>
       </div>
