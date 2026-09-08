@@ -9,6 +9,7 @@ import { Pickaxe, Radar, BookOpen, ShoppingBag } from "lucide-react";
 
 type TabType = "cockpit" | "scanner" | "codex" | "market";
 
+// Hot-reload enabled with Vite HMR
 export function App() {
   const {
     address,

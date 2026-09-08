@@ -1,8 +1,15 @@
-FROM node:24.18.1-bookworm-slim AS builder
+FROM node:24.18.1-bookworm-slim AS base
 RUN apt-get update && apt-get install -y --no-install-recommends python3 make g++ && rm -rf /var/lib/apt/lists/*
 WORKDIR /app
 COPY package*.json ./
 RUN npm ci
+
+FROM base AS development
+COPY . .
+EXPOSE 80 5173
+CMD ["npm", "run", "dev", "--", "--host", "0.0.0.0", "--port", "80"]
+
+FROM base AS builder
 COPY . .
 RUN npm run build
 

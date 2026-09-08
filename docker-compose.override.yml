@@ -1,0 +1,25 @@
+services:
+  server:
+    build:
+      context: ./server
+      target: development
+    environment:
+      - NODE_ENV=development
+    volumes:
+      - ./server/src:/app/src
+    command: npm run dev
+
+  web:
+    build:
+      context: ./web
+      target: development
+    environment:
+      - PORT=80
+      - HMR_CLIENT_PORT=5173
+      - VITE_API_URL=http://server:3001
+    volumes:
+      - ./web/src:/app/src
+      - ./web/public:/app/public
+      - ./web/index.html:/app/index.html
+      - ./web/vite.config.ts:/app/vite.config.ts
+    command: npm run dev -- --host 0.0.0.0 --port 80

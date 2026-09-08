@@ -13,6 +13,7 @@ import { initDb } from "./db/init.js";
 dotenv.config({ path: path.resolve(__dirname, "../../.env") });
 dotenv.config();
 
+// Hot-reload enabled with tsx watch
 const app = Fastify({ logger: true });
 
 async function main() {

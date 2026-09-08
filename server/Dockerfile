@@ -1,6 +1,14 @@
-FROM node:24.18.1-bookworm-slim AS builder
+FROM node:24.18.1-bookworm-slim AS base
 WORKDIR /app
 COPY package*.json tsconfig.json ./
+
+FROM base AS development
+RUN npm ci
+COPY . .
+EXPOSE 3001
+CMD ["npm", "run", "dev"]
+
+FROM base AS builder
 RUN npm ci
 COPY src/ ./src/
 RUN npm run build
