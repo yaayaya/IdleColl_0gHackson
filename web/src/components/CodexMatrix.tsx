@@ -181,6 +181,24 @@ export const CodexMatrix: React.FC<CodexMatrixProps> = ({ address }) => {
                     </span>
                   </div>
 
+                  {/* AI Agent & Sector Provenance */}
+                  <div className="flex flex-wrap items-center justify-between gap-1 text-[9px] font-mono">
+                    <span className="text-neon-cyan/90 bg-cyan-950/60 px-1.5 py-0.5 rounded border border-cyan-800/40">
+                      🤖 0G AI Agent (Qwen-2.5)
+                    </span>
+                    {variant.aiStats?.sector && (
+                      <span className="text-gray-400 truncate max-w-[150px]">
+                        📍 {variant.aiStats.sector}
+                      </span>
+                    )}
+                  </div>
+
+                  {variant.aiStats?.anomaly && (
+                    <div className="text-[9px] font-mono text-purple-300 bg-purple-950/40 px-2 py-0.5 rounded border border-purple-800/40 truncate">
+                      ⚡ {variant.aiStats.anomaly}
+                    </div>
+                  )}
+
                   <p className="text-[11px] text-gray-300 leading-relaxed bg-space-900/60 p-2 rounded border border-space-800">
                     {variant.aiLore}
                   </p>

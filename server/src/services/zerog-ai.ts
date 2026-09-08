@@ -2,6 +2,9 @@ export interface AIGeneratedItem {
   title: string;
   lore: string;
   personality: string;
+  sector?: string;
+  anomaly?: string;
+  quantumHash?: string;
   stats: {
     luck: number;
     miningBonus: string;
@@ -10,8 +13,51 @@ export interface AIGeneratedItem {
     rarityScore: number;
     specialTrait: string;
     traitDescription: string;
+    sector?: string;
+    anomaly?: string;
   };
 }
+
+const COSMIC_SECTORS = [
+  "柯伊伯帶第 42 號廢棄小行星礦坑",
+  "半人馬座黑洞邊緣吸積盤",
+  "仙女座引力透鏡第 7 躍遷走廊",
+  "船底座星雲超新星遺跡第 9 扇區",
+  "獵戶座暗星雲冰凍死星地底",
+  "天鵝座 X-1 雙星系強磁場殘骸帶",
+  "室女座超星系團邊緣廢棄太空站",
+  "英仙座外緣失落走私艦隊墓場",
+  "舊地球同步軌道第 13 號垃圾掩埋帶",
+  "海山二高能伽馬射線暴焦點遺跡",
+  "盾牌座 UY 超巨星近日軌道觀測站",
+  "蛇夫座低溫分子雲原始吸積盤",
+  "銀河系銀心第 3 號人造戴森環廢墟",
+  "大麥哲倫星系邊界暗物質風暴區",
+  "武仙-北冕座長城未知古文明碎石帶"
+];
+
+const COSMIC_ANOMALIES = [
+  "絕對零度極致深凍、殘留超光速引力波漣漪",
+  "高能霍金輻射淬煉、微型事件視界潮汐撕裂",
+  "強電磁脈衝風暴沖刷、外殼呈現彩虹狀反引力燒蝕痕跡",
+  "反物質洩漏微環境、表面包裹未知硅基結晶共生體",
+  "超維度拓撲幾何折疊、時間流速呈現非線性擾動",
+  "高密度中子星塵埃沉積、原子核級別超導晶格重組",
+  "恆星耀斑高溫等離子體洗禮、金屬記憶合金自我重構",
+  "微黑洞潮汐力拉伸、內部結構呈現非對稱量子坍縮",
+  "宇宙射線暴高頻聚焦、引發微弱的自主意識電路脈衝",
+  "普朗克尺度空間泡沫沸騰、具備局域微重力懸浮特性",
+  "外星真菌孢子超空間休眠體附著、散發幽綠自發光冷焰",
+  "強重力透鏡光子滯留、光線在物體表面形成閉環迴旋"
+];
+
+const COSMIC_GENRES = [
+  "硬核天體物理奇觀",
+  "幽默荒誕的深空異聞",
+  "賽博龐克生物機械異化",
+  "遠古失落文明星際考古",
+  "超空間維度異化與奇點探索"
+];
 
 const FALLBACK_TRAITS = [
   { name: "曲率核心共振", desc: "引發反應爐高能共振，提升艦隊整體產能與反應靈敏度" },
@@ -66,10 +112,17 @@ export async function generateAILoreAndStats(archetypeName: string, rarity: stri
     baseLuck = 94;
   }
 
+  // Dynamic Cosmic Exploration Entropy (Prevents repetitive LLM outputs)
+  const sector = COSMIC_SECTORS[Math.floor(Math.random() * COSMIC_SECTORS.length)];
+  const anomaly = COSMIC_ANOMALIES[Math.floor(Math.random() * COSMIC_ANOMALIES.length)];
+  const genre = COSMIC_GENRES[Math.floor(Math.random() * COSMIC_GENRES.length)];
+  const quantumHash = "0x" + Math.floor(Math.random() * 0xffffffff).toString(16).padStart(8, "0");
+
   // If live 0G Serving API is configured, attempt real inference
   if (apiKey) {
     try {
       console.log(`[0G AI] Requesting real 0G Compute inference at ${endpoint} (model: ${model})...`);
+      const dynamicTemp = parseFloat((0.92 + Math.random() * 0.06).toFixed(2));
       const response = await fetch(`${endpoint}/chat/completions`, {
         method: "POST",
         headers: {
@@ -81,38 +134,44 @@ export async function generateAILoreAndStats(archetypeName: string, rarity: stri
           messages: [
             {
               role: "system",
-              content: `你是一位深空星際考古學家與 0G 智能遺物解算專家。
-請根據給定的道具原型與稀有度，解算出一件絕無僅有、具有濃厚硬派科幻感的 0G 星際藏品。
-必須全部使用「繁體中文」輸出，且必須嚴格輸出合法的 JSON，不可包含 markdown 標籤之外的任何非 JSON 文字。
+              content: `你是一位受雇於 0G 去中心化 AI Agent 網路的深空星際考古學家。請依據探測資料，原創解算一件極具特色、絕不重複的 0G 星際藏品。
+必須嚴格、全部使用「繁體中文」（正體中文）輸出，嚴禁輸出任何簡體字！
+不可包含 markdown 代碼塊之外的任何雜訊，必須輸出合法 JSON。
 
 輸出格式規格：
 {
-  "title": "「星雲低語」量子曲率核心",
-  "lore": "這具核心被發現於獵戶座懸臂的廢棄科研觀測站，其內部仍封存著未解的超空間引力波漣漪。每當鄰近恆星耀斑爆發時，外殼的 0G 拓撲晶格便會散發微弱幽藍光芒。",
-  "personality": "深邃沉靜，偶爾在超空間躍遷時產生低頻電磁共鳴",
+  "title": "『量子拓撲』超光速躍遷核心",
+  "lore": "在半人馬座黑洞邊緣吸積盤中，這件遺物歷經高能霍金輻射淬煉，表面銘刻著奇異的反引力燒蝕痕跡。當探測器接近時，其內部仍發出有規律的超空間電磁脈衝。",
+  "personality": "高傲且神秘，偶爾散發冷色調的量子幽光",
   "stats": {
-    "luck": 88,
-    "miningBonus": "+25%",
-    "miningBonusValue": 2.5,
-    "capacityBonus": 400,
-    "rarityScore": 92,
+    "luck": ${baseLuck},
+    "miningBonus": "${baseBonusStr}",
+    "miningBonusValue": ${baseBonus},
+    "capacityBonus": ${baseCapacity},
+    "rarityScore": ${baseLuck},
     "specialTrait": "引力透鏡共振",
-    "traitDescription": "產生超維度引力場，實時提升採礦速率 +2.5 幣/秒並擴充儲存池 400 金幣上限"
+    "traitDescription": "產生超維度引力場，實時提升採礦速率 +${baseBonus} 幣/秒並擴充儲存池 ${baseCapacity} 金幣上限"
   }
 }
 
-要求：
-1. title: 必須極具科幻藝術感且獨特（例如「『永恆熵增』反物質引擎」、「普朗克裂隙探測稜鏡」），嚴禁千篇一律的前綴！
-2. lore: 2-3 句具備星際歷史由來與奇異現象的繁體中文故事。
-3. stats 中的數值需符合此物品的稀有度基準。`
+【關鍵生成原則】：
+1. title: 必須極具科幻張力與想像力（可結合星區特色、物理現象或荒誕風格，例如『彩虹蝕痕』反重力拖鞋、普朗克裂隙踏板、零度坍縮漫步履、『晶體爆裂者』突變兔、第42號小行星重型破冰機）。【嚴禁】千篇一律重複使用「星塵漫步者」、「月球突變兔核心」等常見套路！
+2. lore: 必須將給定的【0G 探測星區】與【異常環境】緊密融入故事中，敘述其出土經過與奇異物理現象，長度約 2-3 句。
+3. specialTrait 與 traitDescription: 必須緊扣給定的異常環境與故事主題打造專屬效果。
+4. stats 數值請維持或微調給定的基準值。`
             },
             {
               role: "user",
-              content: `請為以下原型生成獨一無二的 ${rarity} 級星際藏品：原型名稱【${archetypeName}】，稀有度【${rarity}】。基準加成參考：產率加成約 ${baseBonusStr} (數值約 ${baseBonus})，容量擴充約 +${baseCapacity}，幸運值約 ${baseLuck}。`
+              content: `【0G 探測星區】：${sector}
+【探測異常環境】：${anomaly}
+【科幻流派風格】：${genre}
+【出土原型】：${archetypeName} (${rarity})
+【量子觀測雜湊】：${quantumHash}
+請以 0G 去中心化 AI Agent 身份，原創解算此藏品！`
             }
           ],
-          temperature: 0.85,
-          max_tokens: 450,
+          temperature: dynamicTemp,
+          max_tokens: 500,
         }),
       });
 
@@ -131,8 +190,15 @@ export async function generateAILoreAndStats(archetypeName: string, rarity: stri
             parsed.stats.rarityScore = Number(parsed.stats.rarityScore) || parsed.stats.luck;
             parsed.stats.specialTrait = parsed.stats.specialTrait || "星際共振";
             parsed.stats.traitDescription = parsed.stats.traitDescription || `提供 ${parsed.stats.miningBonus} 產幣增幅與 +${parsed.stats.capacityBonus} 儲能擴充`;
+            
+            // Enrich with environmental provenance
+            parsed.sector = sector;
+            parsed.anomaly = anomaly;
+            parsed.quantumHash = quantumHash;
+            parsed.stats.sector = sector;
+            parsed.stats.anomaly = anomaly;
 
-            console.log(`[0G AI] Successfully received 0G decentralized AI generation: "${parsed.title}"`);
+            console.log(`[0G AI] Successfully received 0G decentralized AI generation: "${parsed.title}" (Sector: ${sector})`);
             return parsed as AIGeneratedItem;
           }
         }
@@ -145,12 +211,12 @@ export async function generateAILoreAndStats(archetypeName: string, rarity: stri
     }
   }
 
-  // Resilient rich procedural generator (100% stable fallback)
+  // Resilient rich procedural generator (100% stable fallback with cosmic entropy)
   const traitObj = FALLBACK_TRAITS[Math.floor(Math.random() * FALLBACK_TRAITS.length)];
   const loreText = FALLBACK_LORES[Math.floor(Math.random() * FALLBACK_LORES.length)];
   const serialNo = Math.floor(Math.random() * 9000) + 1000;
 
-  const adjectives = ["超維度", "遺落在事件視界的", "極地低溫超導", "被反物質浸潤的", "第4維度投影", "高頻震盪", "普朗克尺度", "0G共識驗證"];
+  const adjectives = ["超維度", "零度坍縮", "極地低溫超導", "反物質浸潤", "第4維度投影", "高頻震盪", "普朗克尺度", "0G拓撲驗證"];
   const selectedAdj = adjectives[Math.floor(Math.random() * adjectives.length)];
 
   const luckRoll = Math.min(99, baseLuck + Math.floor(Math.random() * 8) - 3);
@@ -159,8 +225,11 @@ export async function generateAILoreAndStats(archetypeName: string, rarity: stri
 
   return {
     title: `「${selectedAdj}」${archetypeName} #${serialNo}`,
-    lore: `出土於深空遠征採集任務。${loreText}`,
+    lore: `出土於【${sector}】。在【${anomaly}】的極限條件下，${loreText}`,
     personality: Math.random() > 0.5 ? "高頻躁動，渴求更多反應爐能量反饋" : "沉穩自律，可精確過濾深空背景輻射干擾",
+    sector,
+    anomaly,
+    quantumHash,
     stats: {
       luck: luckRoll,
       miningBonus: `+${Math.round(bonusVal * 10)}%`,
@@ -169,6 +238,8 @@ export async function generateAILoreAndStats(archetypeName: string, rarity: stri
       rarityScore: luckRoll,
       specialTrait: traitObj.name,
       traitDescription: `${traitObj.desc}（產幣 +${bonusVal}/秒，儲能 +${capBonus} 金幣）`,
+      sector,
+      anomaly,
     },
   };
 }

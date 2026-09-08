@@ -257,9 +257,29 @@ export const ScannerQueueProvider: React.FC<{
 
                 {/* AI Generated Content */}
                 <div className="space-y-2 text-left">
+                  {/* 0G AI Agent Badge & Sector */}
+                  <div className="flex flex-wrap items-center justify-between gap-1.5 text-[10px] font-mono">
+                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-cyan-950/80 text-neon-cyan border border-cyan-500/40">
+                      <Sparkles className="w-2.5 h-2.5" />
+                      0G AI Agent 原創解算
+                    </span>
+                    {revealedItem.collectible.aiStats?.sector && (
+                      <span className="text-gray-400 truncate max-w-[180px]">
+                        📍 {revealedItem.collectible.aiStats.sector}
+                      </span>
+                    )}
+                  </div>
+
                   <h3 className="text-sm sm:text-base font-bold text-gray-100 font-mono tracking-tight leading-snug">
                     {revealedItem.collectible.aiTitle}
                   </h3>
+
+                  {revealedItem.collectible.aiStats?.anomaly && (
+                    <div className="text-[10px] font-mono text-purple-300 bg-purple-950/40 px-2.5 py-1 rounded-lg border border-purple-800/50">
+                      ⚡ 異常環境：{revealedItem.collectible.aiStats.anomaly}
+                    </div>
+                  )}
+
                   <div className="text-xs text-gray-300 leading-relaxed bg-space-950/70 p-3 rounded-xl border border-space-800/80">
                     {revealedItem.collectible.aiLore}
                   </div>

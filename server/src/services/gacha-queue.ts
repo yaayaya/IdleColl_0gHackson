@@ -182,11 +182,18 @@ class GachaQueueService {
         attributes: [
           { trait_type: "Archetype", value: selectedArchetype.name },
           { trait_type: "Rarity", value: selectedArchetype.rarity },
+          { trait_type: "Sector", value: aiItem.sector || "深空未知星區" },
           { trait_type: "Special Trait", value: aiItem.stats.specialTrait },
           { trait_type: "Mining Bonus", value: aiItem.stats.miningBonus },
           { trait_type: "Luck", value: aiItem.stats.luck },
+          { trait_type: "AI Agent", value: "0G Compute Qwen-2.5-Omni" },
         ],
         zerog_provenance: {
+          agent: "0G Decentralized AI Agent",
+          model: process.env.ZEROG_AI_MODEL || "qwen/qwen2.5-omni-7b",
+          sector: aiItem.sector,
+          anomaly: aiItem.anomaly,
+          quantum_hash: aiItem.quantumHash,
           personality: aiItem.personality,
           network: "0G Galileo Testnet (16602)",
           storage_provider: "0G Storage",

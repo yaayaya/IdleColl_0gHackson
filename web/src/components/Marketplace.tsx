@@ -762,11 +762,25 @@ export const Marketplace: React.FC<MarketplaceProps> = ({
               </div>
 
               {/* Unique Lore & Backstory */}
-              <div className="space-y-1">
-                <label className="text-[10px] font-mono text-gray-400 font-semibold flex items-center gap-1">
-                  <Sparkles className="w-3 h-3 text-cyan-400" />
-                  <span>0G AI 解算背景傳奇：</span>
-                </label>
+              <div className="space-y-1.5">
+                <div className="flex flex-wrap items-center justify-between gap-1 text-[10px] font-mono">
+                  <span className="text-neon-cyan/90 bg-cyan-950/70 px-2 py-0.5 rounded-full border border-cyan-800/50 flex items-center gap-1 font-semibold">
+                    <Sparkles className="w-2.5 h-2.5" />
+                    0G AI Agent (Qwen-2.5) 原創解算
+                  </span>
+                  {inspectItem.details?.aiStats?.sector && (
+                    <span className="text-gray-400 truncate max-w-[170px]">
+                      📍 {inspectItem.details.aiStats.sector}
+                    </span>
+                  )}
+                </div>
+
+                {inspectItem.details?.aiStats?.anomaly && (
+                  <div className="text-[10px] font-mono text-purple-300 bg-purple-950/40 px-2.5 py-1 rounded-lg border border-purple-800/40">
+                    ⚡ 異常環境：{inspectItem.details.aiStats.anomaly}
+                  </div>
+                )}
+
                 <div className="p-3 rounded-xl bg-space-850/90 border border-space-750 text-xs text-gray-300 leading-relaxed">
                   {inspectItem.details?.aiLore || "深空考古隊尚未解讀完整的星際歷史記錄。"}
                 </div>
@@ -1013,10 +1027,17 @@ export const Marketplace: React.FC<MarketplaceProps> = ({
 
                       {/* AI Lore Narrative Box */}
                       <div className="space-y-1">
-                        <label className="text-[10px] font-mono text-gray-400 font-semibold flex items-center gap-1">
-                          <Sparkles className="w-3 h-3 text-cyan-400" />
-                          <span>0G AI 解算背景：</span>
-                        </label>
+                        <div className="flex flex-wrap items-center justify-between gap-1 text-[10px] font-mono">
+                          <label className="text-gray-400 font-semibold flex items-center gap-1">
+                            <Sparkles className="w-3 h-3 text-cyan-400" />
+                            <span>0G AI Agent 解算背景：</span>
+                          </label>
+                          {selectedItem.aiStats?.sector && (
+                            <span className="text-gray-400 truncate max-w-[150px]">
+                              📍 {selectedItem.aiStats.sector}
+                            </span>
+                          )}
+                        </div>
                         <div className="p-2.5 rounded-lg bg-space-900/80 border border-space-800 text-[11px] text-gray-300 leading-relaxed line-clamp-2">
                           {selectedItem.aiLore || "深空考古隊尚未解讀完整的星際歷史記錄。"}
                         </div>
