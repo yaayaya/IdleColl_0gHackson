@@ -1,0 +1,974 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>IdleColl — 0G Deep Space Collector</title>
+  <style>
+    :root {
+      --bg: #060913;
+      --card-bg: rgba(13, 20, 36, 0.82);
+      --border: rgba(0, 240, 255, 0.25);
+      --cyan: #00f0ff;
+      --purple: #a855f7;
+      --amber: #f59e0b;
+      --green: #10b981;
+      --red: #ef4444;
+      --pink: #ec4899;
+      --text: #f8fafc;
+      --muted: #94a3b8;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      user-select: none;
+    }
+
+    body {
+      background-color: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "PingFang TC", "Noto Sans TC", sans-serif;
+      width: 100vw;
+      height: 100vh;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      background-image: 
+        radial-gradient(circle at 15% 15%, rgba(0, 240, 255, 0.12) 0%, transparent 45%),
+        radial-gradient(circle at 85% 85%, rgba(168, 85, 247, 0.14) 0%, transparent 50%),
+        radial-gradient(circle at 50% 50%, rgba(10, 15, 30, 0.92) 0%, transparent 100%);
+    }
+
+    #deck {
+      position: relative;
+      width: 100vw;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .slide {
+      position: absolute;
+      inset: 0;
+      padding: 44px 72px 84px 72px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      opacity: 0;
+      visibility: hidden;
+      transform: scale(0.97);
+      transition: all 0.32s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .slide.active {
+      opacity: 1;
+      visibility: visible;
+      transform: scale(1);
+    }
+
+    .title-box {
+      margin-bottom: 24px;
+    }
+
+    .badge-tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 14px;
+      border-radius: 9999px;
+      font-size: 0.82rem;
+      font-weight: 800;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      color: var(--cyan);
+      background: rgba(0, 240, 255, 0.12);
+      border: 1px solid rgba(0, 240, 255, 0.35);
+      margin-bottom: 8px;
+    }
+
+    h1.slide-title {
+      font-size: 2.8rem;
+      font-weight: 900;
+      letter-spacing: -0.5px;
+      color: #fff;
+      line-height: 1.2;
+    }
+
+    h1.slide-title span {
+      background: linear-gradient(135deg, var(--cyan), var(--purple));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .slide-desc {
+      font-size: 1.18rem;
+      color: var(--muted);
+      margin-top: 4px;
+    }
+
+    /* Grids */
+    .grid-2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 36px;
+      align-items: stretch;
+    }
+
+    .grid-3 {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 26px;
+      align-items: stretch;
+    }
+
+    .grid-4 {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 20px;
+      align-items: stretch;
+    }
+
+    /* Cards */
+    .v-card {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 28px 26px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      position: relative;
+      backdrop-filter: blur(14px);
+      box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+    }
+
+    .v-card.glow-cyan {
+      border-color: rgba(0, 240, 255, 0.45);
+      box-shadow: inset 0 0 25px rgba(0, 240, 255, 0.08);
+    }
+
+    .v-card.glow-purple {
+      border-color: rgba(168, 85, 247, 0.45);
+      box-shadow: inset 0 0 25px rgba(168, 85, 247, 0.08);
+    }
+
+    .v-card.glow-amber {
+      border-color: rgba(245, 158, 11, 0.45);
+      box-shadow: inset 0 0 25px rgba(245, 158, 11, 0.08);
+    }
+
+    .v-card.danger {
+      border-color: rgba(239, 68, 68, 0.4);
+      background: rgba(239, 68, 68, 0.06);
+    }
+
+    .v-card.success {
+      border-color: rgba(16, 185, 129, 0.45);
+      background: rgba(16, 185, 129, 0.07);
+    }
+
+    .card-icon {
+      font-size: 2.8rem;
+      margin-bottom: 12px;
+      display: inline-block;
+    }
+
+    .card-heading {
+      font-size: 1.55rem;
+      font-weight: 800;
+      color: #fff;
+      margin-bottom: 14px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .point-list {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .point-list li {
+      font-size: 1.15rem;
+      font-weight: 600;
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      line-height: 1.45;
+      color: #e2e8f0;
+    }
+
+    .point-list li span.dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      display: inline-block;
+      flex-shrink: 0;
+      margin-top: 6px;
+    }
+
+    /* Cover */
+    .cover-center {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      height: 100%;
+    }
+
+    .cover-logo-halo {
+      position: relative;
+      width: 120px;
+      height: 120px;
+      margin-bottom: 18px;
+    }
+
+    .cover-logo-halo::before {
+      content: '';
+      position: absolute;
+      inset: -20px;
+      background: radial-gradient(circle, rgba(0, 240, 255, 0.55) 0%, rgba(168, 85, 247, 0) 70%);
+      filter: blur(25px);
+    }
+
+    .cover-logo-halo img {
+      width: 100%;
+      height: 100%;
+      position: relative;
+      z-index: 1;
+      animation: float 4s ease-in-out infinite;
+    }
+
+    @keyframes float {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-10px); }
+    }
+
+    .cover-h1 {
+      font-size: 4.6rem;
+      font-weight: 900;
+      letter-spacing: -1.5px;
+      margin-bottom: 6px;
+      background: linear-gradient(135deg, #fff 40%, var(--cyan) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .cover-sub {
+      font-size: 1.85rem;
+      font-weight: 700;
+      color: var(--cyan);
+      margin-bottom: 22px;
+    }
+
+    .cover-pill {
+      display: flex;
+      gap: 16px;
+      margin-top: 8px;
+    }
+
+    .pill {
+      font-size: 1.05rem;
+      font-weight: 700;
+      padding: 8px 20px;
+      border-radius: 9999px;
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      color: #fff;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .pill.glow {
+      background: rgba(0, 240, 255, 0.15);
+      border-color: var(--cyan);
+      color: var(--cyan);
+    }
+
+    /* 4-Step Loop */
+    .loop-step {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 24px 18px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      position: relative;
+    }
+
+    .loop-num {
+      font-size: 1.1rem;
+      font-weight: 900;
+      color: var(--cyan);
+      background: rgba(0, 240, 255, 0.12);
+      border: 1px solid rgba(0, 240, 255, 0.3);
+      width: 38px;
+      height: 38px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 12px;
+    }
+
+    .loop-title {
+      font-size: 1.4rem;
+      font-weight: 800;
+      color: #fff;
+      margin-bottom: 10px;
+    }
+
+    .loop-desc {
+      font-size: 1rem;
+      color: var(--muted);
+      line-height: 1.5;
+    }
+
+    /* Phone Mockups (Slide 5) */
+    .mockup-card {
+      background: #090e1a;
+      border: 1.5px solid rgba(0, 240, 255, 0.3);
+      border-radius: 22px;
+      padding: 16px 14px;
+      display: flex;
+      flex-direction: column;
+      position: relative;
+      box-shadow: 0 12px 35px rgba(0, 0, 0, 0.6), inset 0 0 20px rgba(0, 240, 255, 0.05);
+      overflow: hidden;
+    }
+
+    .mockup-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+      padding-bottom: 10px;
+      margin-bottom: 12px;
+    }
+
+    .mockup-header-title {
+      font-size: 0.95rem;
+      font-weight: 800;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .mockup-body {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      gap: 10px;
+    }
+
+    .mockup-chip {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 10px;
+      padding: 8px 10px;
+      font-size: 0.8rem;
+      color: #cbd5e1;
+      line-height: 1.4;
+    }
+
+    .mockup-badge {
+      font-size: 0.7rem;
+      font-weight: 800;
+      padding: 2px 6px;
+      border-radius: 4px;
+      color: var(--cyan);
+      background: rgba(0, 240, 255, 0.15);
+      display: inline-block;
+    }
+
+    /* 12 Items Showcase */
+    .items-12-grid {
+      display: grid;
+      grid-template-columns: repeat(6, 1fr);
+      gap: 14px;
+    }
+
+    .item-box {
+      background: rgba(15, 23, 42, 0.8);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 16px;
+      padding: 14px 10px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      transition: all 0.2s ease;
+    }
+
+    .item-box:hover {
+      transform: translateY(-6px);
+      border-color: var(--cyan);
+      box-shadow: 0 10px 25px rgba(0, 240, 255, 0.25);
+    }
+
+    .item-box img {
+      width: 68px;
+      height: 68px;
+      margin-bottom: 8px;
+      filter: drop-shadow(0 4px 8px rgba(0,0,0,0.5));
+    }
+
+    .item-box-title {
+      font-size: 0.92rem;
+      font-weight: 700;
+      color: #fff;
+      white-space: nowrap;
+    }
+
+    .item-box-badge {
+      font-size: 0.7rem;
+      font-weight: 800;
+      padding: 2px 7px;
+      border-radius: 6px;
+      margin-top: 5px;
+    }
+
+    .badge-common { color: #38bdf8; background: rgba(56, 189, 248, 0.15); }
+    .badge-rare { color: #c084fc; background: rgba(192, 132, 252, 0.15); }
+    .badge-epic { color: #f472b6; background: rgba(244, 114, 182, 0.15); }
+    .badge-legendary { color: #fbbf24; background: rgba(251, 191, 36, 0.15); }
+
+    /* Highlights 4 Cards */
+    .highlight-card {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 24px 20px;
+      display: flex;
+      flex-direction: column;
+      position: relative;
+    }
+
+    .highlight-card-title {
+      font-size: 1.3rem;
+      font-weight: 800;
+      color: #fff;
+      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .highlight-card-desc {
+      font-size: 1rem;
+      color: var(--muted);
+      line-height: 1.5;
+    }
+
+    /* Bottom Status Controls */
+    #status-bar {
+      position: absolute;
+      bottom: 18px;
+      left: 60px;
+      right: 60px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      z-index: 100;
+    }
+
+    .dots-container {
+      display: flex;
+      gap: 10px;
+    }
+
+    .dot-item {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.2);
+      cursor: pointer;
+      transition: all 0.25s;
+    }
+
+    .dot-item.active {
+      width: 32px;
+      border-radius: 8px;
+      background: var(--cyan);
+      box-shadow: 0 0 10px var(--cyan);
+    }
+
+    .nav-hints {
+      font-size: 0.9rem;
+      color: var(--muted);
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .key-hint {
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.18);
+      padding: 3px 8px;
+      border-radius: 6px;
+      color: #fff;
+      font-weight: bold;
+      font-size: 0.8rem;
+    }
+  </style>
+</head>
+<body>
+
+  <div id="deck">
+
+    <!-- SLIDE 1: 封面 -->
+    <div class="slide active" id="s1">
+      <div class="cover-center">
+        <div class="cover-logo-halo">
+          <img src="web/public/logo.svg" alt="IdleColl Logo">
+        </div>
+        <h1 class="cover-h1">IdleColl</h1>
+        <div class="cover-sub">0G Deep Space Collector (星際放置收集與鏈上 AI 拍賣行)</div>
+        
+        <div class="cover-pill">
+          <div class="pill glow">🤖 0G AI 真實數值賦魂</div>
+          <div class="pill glow">📦 0G Storage 永久封存</div>
+          <div class="pill glow">⛓️ 0G 原生拍賣 ＆ 全息檢視</div>
+        </div>
+
+        <div style="margin-top: 28px; font-size: 1.15rem; color: var(--muted);">
+          🏆 0G Hackathon 2026 ｜ 零摩擦・全功能 Web3 手遊
+        </div>
+      </div>
+    </div>
+
+    <!-- SLIDE 2: 痛點 vs 改版破局 -->
+    <div class="slide" id="s2">
+      <div class="title-box">
+        <div class="badge-tag">Problem & Solution</div>
+        <h1 class="slide-title">打破 Web3 遊戲的 <span>「三大死穴」</span></h1>
+        <div class="slide-desc">徹底告別又難用又死板的舊鏈遊體驗</div>
+      </div>
+
+      <div class="grid-2">
+        <div class="v-card danger">
+          <div class="card-icon" style="color: var(--red);">❌</div>
+          <div class="card-heading" style="color: #fca5a5;">傳統鏈遊的痛</div>
+          <ul class="point-list">
+            <li><span class="dot" style="background: var(--red);"></span> <strong>狂跳彈窗與 Gas 痛：</strong>每次抽卡都要錢包簽名，手遊爽感全毀</li>
+            <li><span class="dot" style="background: var(--red);"></span> <strong>NFT 死板無功能：</strong>同款卡片毫無個性，純炒作無遊戲戰力</li>
+            <li><span class="dot" style="background: var(--red);"></span> <strong>鏈上塞車與 404：</strong>中心化儲存易失效，抽卡撞 Nonce 頻頻報錯</li>
+          </ul>
+        </div>
+
+        <div class="v-card success">
+          <div class="card-icon" style="color: var(--green);">✨</div>
+          <div class="card-heading" style="color: #86efac;">IdleColl 0G 破局解法</div>
+          <ul class="point-list">
+            <li><span class="dot" style="background: var(--green);"></span> <strong>零 Gas 靜默上鏈：</strong>後端 Minter 代付，0 彈窗、0 摩擦秒開箱</li>
+            <li><span class="dot" style="background: var(--green);"></span> <strong>0G AI 真實數值反哺：</strong>動態生成產能、容量加成，實裝於駕駛艙</li>
+            <li><span class="dot" style="background: var(--green);"></span> <strong>0G Storage 永存 ＋ 異步佇列：</strong>原生 <code>0g://</code> 存證，後台排隊防衝突</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- SLIDE 3: 我們用了啥？(0G 全棧賦能架構) -->
+    <div class="slide" id="s3">
+      <div class="title-box">
+        <div class="badge-tag">0G Tech Stack</div>
+        <h1 class="slide-title">我們用了啥？<span>0G 三大核心全棧整合</span></h1>
+        <div class="slide-desc">AI 數值推論 ＋ 去中心化儲存 ＋ 高性能 EVM 原生拍賣</div>
+      </div>
+
+      <div class="grid-3">
+        <!-- 0G Serving -->
+        <div class="v-card glow-cyan">
+          <div class="card-icon">🤖</div>
+          <div class="card-heading" style="color: var(--cyan);">0G Serving (AI)</div>
+          <ul class="point-list" style="gap: 13px;">
+            <li><strong>推論端點：</strong><code>serving.0g.ai/v1</code></li>
+            <li><strong>推論模型：</strong><code>qwen-2.5-7b</code></li>
+            <li><strong>真實數值賦能：</strong>生成專屬稱號、背景 Lore，以及 <strong>採礦速率加成、容量擴充、爆擊幸運</strong>！</li>
+            <li><strong>雙層防護：</strong>自帶高效 Procedural Fallback 熔斷保護。</li>
+          </ul>
+        </div>
+
+        <!-- 0G Storage -->
+        <div class="v-card glow-purple">
+          <div class="card-icon">📦</div>
+          <div class="card-heading" style="color: var(--purple);">0G Storage</div>
+          <ul class="point-list" style="gap: 13px;">
+            <li><strong>去中心存儲：</strong>0G Testnet Standard Indexer</li>
+            <li><strong>不可篡改雜湊：</strong>原生 <code>0g://0x...</code> Merkle Root</li>
+            <li><strong>完整規格：</strong>標準 ERC-721 Metadata 直接封存於 0G 節點。</li>
+            <li><strong>永久防偽：</strong>記錄 Provenance 原生時間戳與性格標籤。</li>
+          </ul>
+        </div>
+
+        <!-- 0G Galileo Chain -->
+        <div class="v-card glow-amber">
+          <div class="card-icon">⛓️</div>
+          <div class="card-heading" style="color: var(--amber);">0G Galileo Chain</div>
+          <ul class="point-list" style="gap: 13px;">
+            <li><strong>網路參數：</strong>Chain ID <code>16602</code></li>
+            <li><strong>NFT 合約：</strong><code>IdleCollNFT.sol</code> (儲存 0G URI)</li>
+            <li><strong>拍賣合約：</strong><code>IdleCollMarketplace.sol</code></li>
+            <li><strong>原生代幣：</strong>使用 <strong>0G 原生幣</strong> 進行點對點原子結算！</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- SLIDE 4: 全新 4 步極簡閉環 -->
+    <div class="slide" id="s4">
+      <div class="title-box">
+        <div class="badge-tag">Game Loop</div>
+        <h1 class="slide-title">全新 4 步閉環：<span>放置 ➔ 異步 ➔ 翻卡 ➔ 拍賣</span></h1>
+        <div class="slide-desc">完美融合手遊開箱快感與鏈上資產流轉</div>
+      </div>
+
+      <div class="grid-4">
+        <div class="loop-step">
+          <div class="loop-num">01</div>
+          <div style="font-size: 2.2rem; margin-bottom: 8px;">⛏️</div>
+          <div class="loop-title">放置 ＆ 艦隊 Buff</div>
+          <div class="loop-desc">駕駛艙掛機累積金幣<br>持有的 NFT <strong>提供真實產能加成</strong><br>免費兌換探測券</div>
+        </div>
+
+        <div class="loop-step">
+          <div class="loop-num">02</div>
+          <div style="font-size: 2.2rem; margin-bottom: 8px;">📡</div>
+          <div class="loop-title">0G AI 異步抽卡</div>
+          <div class="loop-desc">深空掃描調用 0G Serving<br><strong>2-Job 異步隊列</strong>防衝撞<br>AI 即時推論專屬詞條</div>
+        </div>
+
+        <div class="loop-step">
+          <div class="loop-num">03</div>
+          <div style="font-size: 2.2rem; margin-bottom: 8px;">🃏</div>
+          <div class="loop-title">手動翻卡 ＆ 永存</div>
+          <div class="loop-desc">寫入 0G Storage 封存<br><strong>玩家手動揭曉翻卡爽感</strong><br>零 Gas 靜默鑄造直達錢包</div>
+        </div>
+
+        <div class="loop-step" style="border-color: rgba(245, 158, 11, 0.5);">
+          <div class="loop-num" style="color: var(--amber); border-color: var(--amber);">04</div>
+          <div style="font-size: 2.2rem; margin-bottom: 8px;">💎</div>
+          <div class="loop-title">0G 原生拍賣行</div>
+          <div class="loop-desc"><strong>全息詞條透視檢驗</strong><br>按產能與稀有度多維篩選<br><strong>0G 原生幣</strong>原子即時過戶</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SLIDE 5: 實機遊玩畫面 (NEW!) -->
+    <div class="slide" id="s5">
+      <div class="title-box">
+        <div class="badge-tag">Actual Gameplay UI</div>
+        <h1 class="slide-title">實機畫面：<span>4 大直式手遊沉浸介面</span></h1>
+        <div class="slide-desc">100% 完整開發與部署，真實運行於 0G Galileo 測試網</div>
+      </div>
+
+      <div class="grid-4">
+        <!-- Mockup 1: 駕駛艙 -->
+        <div class="mockup-card">
+          <div class="mockup-header">
+            <span class="mockup-header-title">🚀 採礦駕駛艙</span>
+            <span class="mockup-badge">Cockpit</span>
+          </div>
+          <div class="mockup-body">
+            <div style="text-align: center; padding: 12px 0;">
+              <div style="font-size: 2.4rem; animation: float 3s ease-in-out infinite;">⚡</div>
+              <div style="font-size: 1.1rem; font-weight: 800; color: #fff; margin-top: 4px;">反應爐產能運轉中</div>
+              <div style="color: var(--cyan); font-weight: bold; font-size: 0.9rem;">+14.5 金幣 / 秒</div>
+            </div>
+            <div class="mockup-chip">
+              <strong style="color: var(--amber);">艦隊 Buff 生效中：</strong><br>
+              • 曲率核心共振 (+3.5/s)<br>
+              • 深空引力透鏡 (容量 +350)<br>
+              • 艦隊爆擊幸運: 82%
+            </div>
+            <div class="mockup-chip" style="background: rgba(0, 240, 255, 0.1); border-color: rgba(0, 240, 255, 0.3); text-align: center; font-weight: bold; color: #fff;">
+              收取金幣 ＆ 兌換探測券
+            </div>
+          </div>
+        </div>
+
+        <!-- Mockup 2: 深空抽卡 -->
+        <div class="mockup-card">
+          <div class="mockup-header">
+            <span class="mockup-header-title">📡 深空掃描 ＆ 翻卡</span>
+            <span class="mockup-badge">Scanner</span>
+          </div>
+          <div class="mockup-body">
+            <div style="text-align: center; padding: 10px 0;">
+              <div style="font-size: 2.2rem;">🃏</div>
+              <div style="font-size: 1rem; font-weight: 800; color: #fff; margin-top: 4px;">探測成功！請手動揭曉</div>
+              <div style="color: var(--purple); font-size: 0.8rem;">2-Job 異步隊列保護</div>
+            </div>
+            <div class="mockup-chip" style="border-color: rgba(245, 158, 11, 0.4); background: rgba(245, 158, 11, 0.08);">
+              <div style="color: var(--amber); font-weight: bold; font-size: 0.85rem;">✨ 獲得：月球突變兔 #882</div>
+              <div style="font-size: 0.75rem; color: #cbd5e1; margin-top: 3px;">0G AI 賦予稱號：「被反物質浸潤的」</div>
+            </div>
+            <div class="mockup-chip" style="background: linear-gradient(135deg, rgba(168,85,247,0.3), rgba(0,240,255,0.3)); border-color: var(--cyan); text-align: center; font-weight: bold; color: #fff;">
+              點擊揭曉金色卡牌 🎴
+            </div>
+          </div>
+        </div>
+
+        <!-- Mockup 3: 星際圖鑑 -->
+        <div class="mockup-card">
+          <div class="mockup-header">
+            <span class="mockup-header-title">📖 星際 12 格圖鑑</span>
+            <span class="mockup-badge">Codex</span>
+          </div>
+          <div class="mockup-body">
+            <div style="text-align: center; padding: 10px 0;">
+              <div style="font-size: 2.2rem;">🌌</div>
+              <div style="font-size: 1rem; font-weight: 800; color: #fff; margin-top: 4px;">收集進度：8 / 12</div>
+              <div style="color: var(--green); font-size: 0.8rem; font-weight: bold;">點亮解鎖 66%</div>
+            </div>
+            <div class="mockup-chip">
+              <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; text-align: center; font-size: 1.1rem;">
+                <span>🍜</span><span>🐰</span><span>🪴</span><span>🛸</span>
+                <span>🚽</span><span>🧊</span><span>📻</span><span>☕</span>
+              </div>
+            </div>
+            <div class="mockup-chip" style="text-align: center; font-size: 0.75rem; color: var(--muted);">
+              點擊任意格子檢視 0g:// 永存 Hash
+            </div>
+          </div>
+        </div>
+
+        <!-- Mockup 4: 拍賣行 -->
+        <div class="mockup-card">
+          <div class="mockup-header">
+            <span class="mockup-header-title">💎 0G 原生拍賣行</span>
+            <span class="mockup-badge">Market</span>
+          </div>
+          <div class="mockup-body">
+            <div style="text-align: center; padding: 10px 0;">
+              <div style="font-size: 2.2rem;">🏛️</div>
+              <div style="font-size: 1rem; font-weight: 800; color: #fff; margin-top: 4px;">0G 原生幣原子結算</div>
+              <div style="color: var(--amber); font-size: 0.8rem;">支援多維篩選與全息透視</div>
+            </div>
+            <div class="mockup-chip">
+              <div style="display: flex; justify-content: space-between; align-items: center;">
+                <span style="font-weight: bold; color: #fff;">創世晶片 #101</span>
+                <span style="color: var(--amber); font-weight: bold;">0.05 0G</span>
+              </div>
+              <div style="font-size: 0.75rem; color: var(--cyan); margin-top: 2px;">✔ 全息詞條檢驗完畢</div>
+            </div>
+            <div class="mockup-chip" style="background: rgba(245, 158, 11, 0.15); border-color: var(--amber); text-align: center; font-weight: bold; color: var(--amber);">
+              原生 0G 幣一鍵購買
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SLIDE 6: 12 款藏品矩陣 -->
+    <div class="slide" id="s6">
+      <div class="title-box">
+        <div class="badge-tag">Collectibles</div>
+        <h1 class="slide-title">12 款星際像素藏品：<span>真實功能 ＆ 全網孤品</span></h1>
+        <div class="slide-desc">點亮 0/12 至 12/12 矩陣，每件裝備都為駕駛艙提供戰力加成</div>
+      </div>
+
+      <div class="items-12-grid">
+        <div class="item-box">
+          <img src="web/public/items/01_ramen.svg" alt="泡麵">
+          <div class="item-box-title">過期太空泡麵</div>
+          <span class="item-box-badge badge-common">Common</span>
+        </div>
+        <div class="item-box">
+          <img src="web/public/items/02_rabbit.svg" alt="兔子">
+          <div class="item-box-title">月球突變兔</div>
+          <span class="item-box-badge badge-rare">Rare</span>
+        </div>
+        <div class="item-box">
+          <img src="web/public/items/03_plant.svg" alt="盆栽">
+          <div class="item-box-title">火星耐旱盆栽</div>
+          <span class="item-box-badge badge-rare">Rare</span>
+        </div>
+        <div class="item-box">
+          <img src="web/public/items/04_drone.svg" alt="無人機">
+          <div class="item-box-title">故障採礦機</div>
+          <span class="item-box-badge badge-common">Common</span>
+        </div>
+        <div class="item-box">
+          <img src="web/public/items/05_toilet.svg" alt="馬桶">
+          <div class="item-box-title">鈦金屬馬桶</div>
+          <span class="item-box-badge badge-common">Common</span>
+        </div>
+        <div class="item-box">
+          <img src="web/public/items/06_ice.svg" alt="冰晶">
+          <div class="item-box-title">木衛二冰晶</div>
+          <span class="item-box-badge badge-epic">Epic</span>
+        </div>
+        <div class="item-box">
+          <img src="web/public/items/07_walkman.svg" alt="Walkman">
+          <div class="item-box-title">賽博 Walkman</div>
+          <span class="item-box-badge badge-epic">Epic</span>
+        </div>
+        <div class="item-box">
+          <img src="web/public/items/08_coffee.svg" alt="咖啡杯">
+          <div class="item-box-title">黑洞咖啡杯</div>
+          <span class="item-box-badge badge-epic">Epic</span>
+        </div>
+        <div class="item-box">
+          <img src="web/public/items/09_slipper.svg" alt="拖鞋">
+          <div class="item-box-title">外星人拖鞋</div>
+          <span class="item-box-badge badge-common">Common</span>
+        </div>
+        <div class="item-box">
+          <img src="web/public/items/10_dyson.svg" alt="戴森球">
+          <div class="item-box-title">戴森球碎塊</div>
+          <span class="item-box-badge badge-legendary">Legendary</span>
+        </div>
+        <div class="item-box">
+          <img src="web/public/items/11_catfood.svg" alt="貓罐頭">
+          <div class="item-box-title">薛丁格貓罐</div>
+          <span class="item-box-badge badge-legendary">Legendary</span>
+        </div>
+        <div class="item-box">
+          <img src="web/public/items/12_chip.svg" alt="0G晶片">
+          <div class="item-box-title">0G 創世晶片</div>
+          <span class="item-box-badge badge-legendary">Legendary</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- SLIDE 7: 最新改版 4 大亮點 -->
+    <div class="slide" id="s7">
+      <div class="title-box">
+        <div class="badge-tag">Recent Major Updates</div>
+        <h1 class="slide-title">最新改版亮點：<span>硬核工程 ＆ 極致打磨</span></h1>
+        <div class="slide-desc">解決現場 DEMO 最常遇到的卡頓、衝突與交互細節</div>
+      </div>
+
+      <div class="grid-4">
+        <div class="highlight-card" style="border-color: rgba(0, 240, 255, 0.4);">
+          <div style="font-size: 2.2rem; margin-bottom: 8px;">🃏</div>
+          <div class="highlight-card-title" style="color: var(--cyan);">手動翻卡儀式</div>
+          <div class="highlight-card-desc">
+            抽卡完成後不突兀彈出，由玩家<strong>親自點擊手動揭曉</strong>，金光粒子噴發，大幅增強開箱快感！
+          </div>
+        </div>
+
+        <div class="highlight-card" style="border-color: rgba(168, 85, 247, 0.4);">
+          <div style="font-size: 2.2rem; margin-bottom: 8px;">🔍</div>
+          <div class="highlight-card-title" style="color: var(--purple);">全息詞條檢視</div>
+          <div class="highlight-card-desc">
+            拍賣行新增<strong>全息詞條透視鏡</strong>，可一覽這張卡由 0G AI 生成的專屬 Lore、產能加成與 0g:// 雜湊。
+          </div>
+        </div>
+
+        <div class="highlight-card" style="border-color: rgba(245, 158, 11, 0.4);">
+          <div style="font-size: 2.2rem; margin-bottom: 8px;">⚡</div>
+          <div class="highlight-card-title" style="color: var(--amber);">異步抗衝撞佇列</div>
+          <div class="highlight-card-desc">
+            伺服器端 <strong>2-Job 佇列上限 ＋ 序列化 Minter</strong>，徹底避免高併發下的 Nonce 衝突與交易失敗。
+          </div>
+        </div>
+
+        <div class="highlight-card" style="border-color: rgba(16, 185, 129, 0.4);">
+          <div style="font-size: 2.2rem; margin-bottom: 8px;">🌐</div>
+          <div class="highlight-card-title" style="color: var(--green);">多節點 RPC 備援</div>
+          <div class="highlight-card-desc">
+            整合 <strong>Cloudflare dRPC 台北節點</strong> ＋ Thirdweb ＋ 0G 官方節點，DEMO 演示 0 延遲不斷線！
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SLIDE 8: 總結 ＆ Q&A -->
+    <div class="slide" id="s8">
+      <div class="cover-center">
+        <div style="font-size: 4.2rem; margin-bottom: 12px;">🚀</div>
+        <h1 class="cover-h1">Thank You!</h1>
+        <div class="cover-sub" style="font-size: 2.2rem; margin-bottom: 24px;">歡迎評審提問 (Q&A)</div>
+
+        <div class="cover-pill">
+          <div class="pill">🌟 0G 原生全棧 (AI + Storage + Chain)</div>
+          <div class="pill">⚡ 零 Gas 靜默上鏈 ＋ 手動翻卡體驗</div>
+          <div class="pill">💎 拍賣行全息檢視 ＆ 0G 原生幣結算</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 底部控制與提示列 -->
+    <div id="status-bar">
+      <div class="dots-container" id="dots">
+        <div class="dot-item active" onclick="goSlide(1)"></div>
+        <div class="dot-item" onclick="goSlide(2)"></div>
+        <div class="dot-item" onclick="goSlide(3)"></div>
+        <div class="dot-item" onclick="goSlide(4)"></div>
+        <div class="dot-item" onclick="goSlide(5)"></div>
+        <div class="dot-item" onclick="goSlide(6)"></div>
+        <div class="dot-item" onclick="goSlide(7)"></div>
+        <div class="dot-item" onclick="goSlide(8)"></div>
+      </div>
+
+      <div class="nav-hints">
+        <span>全螢幕 <span class="key-hint">F</span></span>
+        <span>翻頁 <span class="key-hint">←</span> <span class="key-hint">→</span> <span class="key-hint">空白鍵</span></span>
+        <span id="page-num" style="color: #fff; font-weight: bold; margin-left: 8px;">1 / 8</span>
+      </div>
+    </div>
+
+  </div>
+
+  <script>
+    let cur = 1;
+    const total = 8;
+    const slides = document.querySelectorAll('.slide');
+    const dots = document.querySelectorAll('.dot-item');
+    const pageNum = document.getElementById('page-num');
+
+    function goSlide(n) {
+      if (n < 1) n = 1;
+      if (n > total) n = total;
+      cur = n;
+
+      slides.forEach((s, idx) => {
+        if (idx + 1 === cur) s.classList.add('active');
+        else s.classList.remove('active');
+      });
+
+      dots.forEach((d, idx) => {
+        if (idx + 1 === cur) d.classList.add('active');
+        else d.classList.remove('active');
+      });
+
+      pageNum.innerText = `${cur} / ${total}`;
+    }
+
+    function next() { if (cur < total) goSlide(cur + 1); }
+    function prev() { if (cur > 1) goSlide(cur - 1); }
+
+    function toggleFS() {
+      if (!document.fullscreenElement) {
+        document.documentElement.requestFullscreen().catch(() => {});
+      } else {
+        if (document.exitFullscreen) document.exitFullscreen();
+      }
+    }
+
+    window.addEventListener('keydown', (e) => {
+      if (e.key === 'ArrowRight' || e.key === ' ' || e.key === 'PageDown' || e.key === 'Enter') next();
+      else if (e.key === 'ArrowLeft' || e.key === 'Backspace' || e.key === 'PageUp') prev();
+      else if (e.key === 'f' || e.key === 'F') toggleFS();
+      else if (e.key >= '1' && e.key <= '8') goSlide(parseInt(e.key));
+    });
+
+    window.addEventListener('click', (e) => {
+      if (e.target.closest('#status-bar')) return;
+      if (e.clientX > window.innerWidth * 0.6) next();
+      else if (e.clientX < window.innerWidth * 0.4) prev();
+    });
+  </script>
+</body>
+</html>
