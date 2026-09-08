@@ -34,13 +34,22 @@ function getMMSDK(): MetaMaskSDK | null {
   return mmsdkInstance;
 }
 
+export function isMobileDevice(): boolean {
+  if (typeof navigator === "undefined") return false;
+  return /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+}
+
 export function getEthereumProvider(): any {
   if (typeof window === "undefined") return null;
   // 1. If window.ethereum is already present (e.g. desktop extension or in-app browser), use it
   if ((window as any).ethereum) {
     return (window as any).ethereum;
   }
-  // 2. Otherwise get provider from MetaMask SDK
+  // 2. On PC: strictly extension / plugin only! Do not load MetaMask SDK or show QR codes.
+  if (!isMobileDevice()) {
+    return null;
+  }
+  // 3. Otherwise on mobile: get provider from MetaMask SDK
   const sdk = getMMSDK();
   return sdk?.getProvider() || null;
 }
@@ -211,11 +220,9 @@ export function useWeb3() {
           if (isMounted) setSigner(s);
           const ok = await checkNetwork(browserProvider);
           if (ok && isMounted) updateBalance(first, browserProvider);
-        } else if (isMounted) {
-          // If in MetaMask browser, auto-request accounts
-          if (eth.isMetaMask) {
-            connectWallet();
-          }
+        } else if (isMounted && isMobileDevice() && eth.isMetaMask) {
+          // Only auto-connect inside mobile MetaMask in-app browser
+          connectWallet();
         }
       } catch (err) {
         console.warn("Wallet init check:", err);
@@ -258,8 +265,16 @@ export function useWeb3() {
   const disconnectWallet = useCallback(() => {
     localStorage.setItem("idlecoll_disconnected", "true");
     localStorage.removeItem("idlecoll_guest_addr");
+    if (mmsdkInstance) {
+      try {
+        mmsdkInstance.terminate();
+      } catch {}
+      mmsdkInstance = null;
+    }
     setAddress(null);
     setSigner(null);
+    setProvider(null);
+    setIsCorrectNetwork(false);
     setBalance0G("0.00");
   }, []);
 

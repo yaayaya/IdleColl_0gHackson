@@ -131,7 +131,7 @@ export const ConnectWalletModal: React.FC<ConnectWalletModalProps> = ({
             {isMobile ? (
               <Smartphone className="w-3.5 h-3.5 text-cyan-400" />
             ) : (
-              <Monitor className="w-3.5 h-3.5 text-purple-400" />
+              <Monitor className="w-3.5 h-3.5 text-cyan-400" />
             )}
             <span>{isMobile ? "行動裝置 (Mobile)" : "電腦終端 (Desktop)"}</span>
           </div>
@@ -140,15 +140,19 @@ export const ConnectWalletModal: React.FC<ConnectWalletModalProps> = ({
               className={`w-2 h-2 rounded-full ${
                 hasInjectedProvider
                   ? "bg-emerald-400 shadow-[0_0_6px_#34d399]"
-                  : "bg-cyan-400 shadow-[0_0_6px_#22d3ee]"
+                  : "bg-amber-400 shadow-[0_0_6px_#fbbf24]"
               }`}
             />
             <span
               className={`text-[10px] font-bold ${
-                hasInjectedProvider ? "text-emerald-400" : "text-cyan-400"
+                hasInjectedProvider ? "text-emerald-400" : "text-amber-400"
               }`}
             >
-              {hasInjectedProvider ? "MetaMask 已就緒" : "SDK 通訊就緒"}
+              {hasInjectedProvider
+                ? "MetaMask 外掛已掛載"
+                : isMobile
+                ? "支援 App 喚醒"
+                : "尚未安裝外掛"}
             </span>
           </div>
         </div>
@@ -222,40 +226,36 @@ export const ConnectWalletModal: React.FC<ConnectWalletModalProps> = ({
               </button>
             </div>
           ) : (
-            /* Case 3: Desktop Browser without injected provider */
+            /* Case 3: Desktop Browser without injected provider - strictly plugin only */
             <div className="space-y-3">
-              <div className="p-3 rounded-xl bg-cyan-950/40 border border-cyan-500/30 text-gray-300 text-xs font-mono leading-relaxed space-y-1">
+              <div className="p-3.5 rounded-xl bg-cyan-950/40 border border-cyan-500/30 text-gray-300 text-xs font-mono leading-relaxed space-y-1.5">
                 <div className="flex items-center gap-1.5 text-cyan-300 font-bold">
-                  <Radio className="w-3.5 h-3.5" />
-                  <span>多模式連線支援</span>
+                  <Monitor className="w-4 h-4 text-cyan-400" />
+                  <span>電腦端限定外掛登入 (Plugin Only)</span>
                 </div>
-                <p className="text-[11px] text-gray-300">
-                  支援手機 MetaMask App 掃描 QR 碼連線，或安裝瀏覽器擴充套件直接授權。
+                <p className="text-[11px] text-gray-300 leading-normal">
+                  為確保 0G Galileo 區塊鏈合約互動安全與簽署順暢，電腦端限定使用 <strong>MetaMask 瀏覽器擴充外掛</strong>。目前尚未偵測到外掛。
                 </p>
               </div>
 
-              {/* Primary: Connect via SDK (shows QR code or auto-detects) */}
-              <button
-                onClick={() => {
-                  onConnectMetaMask();
-                  onClose();
-                }}
-                className="w-full py-3 rounded-xl bg-gradient-to-r from-neon-cyan via-cyan-400 to-blue-500 hover:from-cyan-300 hover:to-blue-400 text-black font-mono font-bold text-xs shadow-[0_0_20px_rgba(0,240,255,0.45)] active:scale-95 flex items-center justify-center gap-2 transition-all cursor-pointer"
-              >
-                <Wallet className="w-4 h-4 text-black" />
-                <span>🚀 啟動連線 (支援手機掃碼 / SDK)</span>
-              </button>
-
-              {/* Secondary: Install MetaMask Extension (Cyberpunk glass style - NO ugly orange) */}
+              {/* Action 1: Install Extension */}
               <a
                 href="https://metamask.io/download/"
                 target="_blank"
                 rel="noreferrer"
-                className="w-full py-2.5 rounded-xl bg-space-850 hover:bg-space-800 border border-cyan-500/30 hover:border-cyan-400 text-cyan-300 hover:text-cyan-200 font-mono text-xs font-semibold flex items-center justify-center gap-2 transition-all active:scale-95"
+                className="w-full py-3 rounded-xl bg-gradient-to-r from-neon-cyan via-cyan-400 to-blue-500 hover:from-cyan-300 hover:to-blue-400 text-black font-mono font-bold text-xs shadow-[0_0_20px_rgba(0,240,255,0.45)] active:scale-95 flex items-center justify-center gap-2 transition-all"
               >
-                <ExternalLink className="w-3.5 h-3.5 text-cyan-400" />
-                <span>安裝 MetaMask 瀏覽器擴充套件</span>
+                <ExternalLink className="w-4 h-4 text-black" />
+                <span>前往安裝 MetaMask 瀏覽器外掛</span>
               </a>
+
+              {/* Action 2: Reload Page after installation */}
+              <button
+                onClick={() => window.location.reload()}
+                className="w-full py-2.5 rounded-xl bg-space-850 hover:bg-space-800 border border-space-700 text-gray-300 hover:text-white font-mono text-xs flex items-center justify-center gap-1.5 transition-all active:scale-95 cursor-pointer"
+              >
+                <span>🔄 我已完成外掛安裝，點此重新整理頁面</span>
+              </button>
             </div>
           )}
         </div>
