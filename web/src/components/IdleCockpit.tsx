@@ -18,7 +18,7 @@ interface IdleCockpitProps {
   playerName: string;
   coins: number;
   tickets: number;
-  initialPending: number;
+  livePending: number;
   miningRate: number;
   maxIdleCoins?: number;
   bonusMiningRate?: number;
@@ -30,7 +30,6 @@ interface IdleCockpitProps {
   onBuyTicketSuccess: (newCoins: number, newTickets: number) => void;
   onConnectWallet: () => void;
   onRename: (newName: string) => Promise<boolean>;
-  onNavigateToScanner: () => void;
 }
 
 export const IdleCockpit: React.FC<IdleCockpitProps> = ({
@@ -38,7 +37,7 @@ export const IdleCockpit: React.FC<IdleCockpitProps> = ({
   playerName,
   coins,
   tickets,
-  initialPending,
+  livePending,
   miningRate,
   maxIdleCoins = 1000,
   bonusMiningRate = 0,
@@ -50,34 +49,12 @@ export const IdleCockpit: React.FC<IdleCockpitProps> = ({
   onBuyTicketSuccess,
   onConnectWallet,
   onRename,
-  onNavigateToScanner,
 }) => {
   const { showWarning } = useDialog();
   const effectiveMaxIdle = maxIdleCoins || 1000;
-  const [livePending, setLivePending] = useState<number>(initialPending);
   const [isClaiming, setIsClaiming] = useState<boolean>(false);
   const [isBuying, setIsBuying] = useState<boolean>(false);
   const [claimToast, setClaimToast] = useState<{ message: string; isCrit: boolean } | null>(null);
-
-  // Synchronize livePending when initialPending changes
-  useEffect(() => {
-    if (address) {
-      setLivePending(Math.min(initialPending, effectiveMaxIdle));
-    } else {
-      setLivePending(0);
-    }
-  }, [initialPending, address, effectiveMaxIdle]);
-
-  // Live ticking counter - ONLY tick if address is connected, and capped at effectiveMaxIdle
-  useEffect(() => {
-    if (!address) return; // Do not tick if user is not logged in
-
-    const timer = setInterval(() => {
-      setLivePending((prev) => Math.min(prev + miningRate, effectiveMaxIdle));
-    }, 1000);
-
-    return () => clearInterval(timer);
-  }, [address, miningRate, effectiveMaxIdle]);
 
   const handleClaim = async () => {
     if (!address || isClaiming || livePending <= 0) return;
@@ -93,7 +70,6 @@ export const IdleCockpit: React.FC<IdleCockpitProps> = ({
       });
       const data = await res.json();
       if (res.ok && data.claimed > 0) {
-        setLivePending(0);
         onClaimSuccess(data.player.coins, data.claimed);
 
         if (typeof navigator !== "undefined" && navigator.vibrate) {
@@ -194,16 +170,16 @@ export const IdleCockpit: React.FC<IdleCockpitProps> = ({
             </div>
           </div>
 
-          <div className="space-y-2">
+          <div className="space-y-1.5">
             <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-space-850 border border-space-700 text-gray-400 text-xs font-mono">
               <span className="w-2 h-2 rounded-full bg-amber-400/70" />
-              <span>採礦反應爐 · 待機休眠中 (STANDBY)</span>
+              <span>反應爐待命中 (STANDBY)</span>
             </div>
             <h3 className="text-base font-bold font-mono text-gray-100">
-              連線錢包以啟動反應爐
+              連線 0G 錢包啟動採礦
             </h3>
-            <p className="text-xs text-gray-400 font-mono leading-relaxed max-w-xs mx-auto">
-              立即連線 0G 星際錢包以啟動自動採礦程序（每秒產出 +10 金幣），累積物資兌換深空探測券並挖掘 AI NFT 藏品！
+            <p className="text-xs text-cyan-400/90 font-mono">
+              ⚡ +10 金幣/秒 · 全自動離線收益
             </p>
           </div>
 
@@ -216,12 +192,12 @@ export const IdleCockpit: React.FC<IdleCockpitProps> = ({
             {isConnecting ? (
               <>
                 <Loader2 className="w-4 h-4 text-black animate-spin" />
-                <span>連線授權中...</span>
+                <span>連線中...</span>
               </>
             ) : (
               <>
                 <Wallet className="w-4 h-4 text-black" />
-                <span>連線錢包 · 啟動採礦反應爐</span>
+                <span>連線錢包</span>
               </>
             )}
           </button>
@@ -237,11 +213,11 @@ export const IdleCockpit: React.FC<IdleCockpitProps> = ({
               </div>
               <div>
                 <h2 className="text-xs font-bold font-mono text-gray-200 uppercase tracking-wider">
-                  深空採礦反應爐 (Reactor)
+                  採礦反應爐
                 </h2>
                 <span className="text-[10px] text-emerald-400 font-mono font-bold flex items-center gap-1">
                   <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping" />
-                  運轉中 · 效率 100%
+                  運轉中
                 </span>
               </div>
             </div>
@@ -263,7 +239,7 @@ export const IdleCockpit: React.FC<IdleCockpitProps> = ({
           {/* Pending Coins Display */}
           <div className="py-2 text-center space-y-2">
             <p className="text-[11px] text-gray-400 font-mono tracking-wider uppercase">
-              待採集星際金幣 (Pending Pool)
+              待採集金幣
             </p>
 
             <div className="flex items-center justify-center gap-2">
@@ -293,13 +269,9 @@ export const IdleCockpit: React.FC<IdleCockpitProps> = ({
               </div>
 
               <div className="flex items-center justify-between text-[10px] font-mono text-gray-400 px-0.5">
-                <span>儲能進度 {progressPercent}%</span>
+                <span>儲能 {progressPercent}%</span>
                 <span className={isCapped ? "text-amber-400 font-bold" : "text-gray-400"}>
-                  {isCapped
-                    ? "⚡ 儲存池已滿載！"
-                    : `上限 ${effectiveMaxIdle.toLocaleString()} 金幣 ${
-                        bonusCapacity > 0 ? `(艦隊擴充 +${bonusCapacity})` : ""
-                      }`}
+                  {isCapped ? "⚡ 儲存池已滿載" : `上限 ${effectiveMaxIdle.toLocaleString()} 金幣`}
                 </span>
               </div>
             </div>
@@ -394,33 +366,15 @@ export const IdleCockpit: React.FC<IdleCockpitProps> = ({
           {isBuying ? (
             <>
               <Loader2 className="w-3.5 h-3.5 animate-spin" />
-              <span>探測券兌換中...</span>
+              <span>兌換中...</span>
             </>
           ) : !address ? (
-            "請先連線錢包以兌換物資"
+            "請先連線錢包"
           ) : coins < TICKET_PRICE ? (
             `金幣不足 (需 ${TICKET_PRICE} 金幣)`
           ) : (
-            `花費 ${TICKET_PRICE} 金幣購買 1 張探測券`
+            `兌換探測券 (${TICKET_PRICE} 金幣)`
           )}
-        </button>
-
-        {/* Jump Directly to Deep Space Scanner */}
-        <button
-          onClick={() => {
-            if (!address) return;
-            onNavigateToScanner();
-          }}
-          disabled={!address}
-          className={`w-full py-2.5 rounded-xl font-mono text-xs font-semibold flex items-center justify-center gap-2 transition-all ${
-            !address
-              ? "bg-space-850/40 text-gray-600 border border-space-800/60 opacity-40 cursor-not-allowed select-none"
-              : "bg-space-850 hover:bg-space-800 border border-purple-500/40 hover:border-purple-400 text-purple-300 hover:text-white active:scale-95 cursor-pointer shadow-sm"
-          }`}
-          title={!address ? "請先連線錢包以啟用深空探測" : undefined}
-        >
-          <Radar className={`w-3.5 h-3.5 ${!address ? "text-gray-600" : "text-purple-400"}`} />
-          <span>🚀 立即前往深空探測 {address ? `(已有 ${tickets} 張券)` : ""}</span>
         </button>
       </div>
     </div>

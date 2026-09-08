@@ -118,19 +118,19 @@ export const DeepSpaceScanner: React.FC<DeepSpaceScannerProps> = ({
             />
             <span className="text-gray-300">
               {unrevealedJobs.length > 0
-                ? `✨ 有 ${unrevealedJobs.length} 個探測藏品待點擊揭曉！`
+                ? `✨ 探測完成 (${unrevealedJobs.length} 件待揭曉)`
                 : isScanning
-                ? `探測任務進行中 (${activeJobs.length}/2 個排程)`
-                : "深空雷達待命中 · 隨時可啟動"}
+                ? `深度解算中 (${activeJobs.length}/2)`
+                : "深空雷達待命中"}
             </span>
           </div>
 
-          <p className="text-xs text-gray-400 font-mono">
+          <p className="text-[11px] text-gray-400 font-mono">
             {unrevealedJobs.length > 0
-              ? "🎁 探測已完成！請點擊下方佇列卡片以立體全像揭曉藏品"
+              ? "點擊下方卡片揭曉藏品"
               : isScanning
-              ? "🚀 任務於背景非同步執行，您可自由切換其他頁面"
-              : "探測深空星域，解鎖由 0G AI 生成並上鏈的星際藏品"}
+              ? "背景排程中 · 可自由切換分頁"
+              : "消耗 1 張探測券啟動"}
           </p>
         </div>
 
@@ -238,32 +238,8 @@ export const DeepSpaceScanner: React.FC<DeepSpaceScannerProps> = ({
               </div>
             ))}
           </div>
-
-          <div className="p-2.5 rounded-xl bg-space-950/60 border border-space-800/80 text-[11px] font-mono text-gray-400 leading-relaxed">
-            💡 同時最多進行 2 個探測任務。任務完成後請直接點擊上方完成卡片揭曉，藏品才會正式解鎖並收錄至星際圖鑑！
-          </div>
         </div>
       )}
-
-      {/* Quick Navigation Card */}
-      <div className="rounded-2xl bg-space-900 border border-space-800 p-4 flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded-xl bg-space-850 border border-space-750 flex items-center justify-center text-cyan-400">
-            <BookOpen className="w-4 h-4" />
-          </div>
-          <div>
-            <h4 className="text-xs font-bold font-mono text-gray-200">查看已解鎖藏品</h4>
-            <p className="text-[10px] text-gray-400 font-mono">前往星際圖鑑矩陣檢視所有 AI 變體</p>
-          </div>
-        </div>
-
-        <button
-          onClick={onViewCodex}
-          className="px-3.5 py-2 rounded-xl bg-space-850 hover:bg-space-800 border border-space-700 text-cyan-300 font-mono text-xs font-semibold active:scale-95 transition-all"
-        >
-          進入圖鑑
-        </button>
-      </div>
     </div>
   );
 };

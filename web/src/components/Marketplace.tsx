@@ -497,26 +497,6 @@ export const Marketplace: React.FC<MarketplaceProps> = ({
         </button>
       </div>
 
-      {/* 0G Settlement & Network Update Notice */}
-      <div className="px-3 py-2 rounded-xl bg-space-900/60 border border-space-800 text-[11px] font-mono text-gray-400 flex items-center justify-between gap-2">
-        <span className="text-cyan-400 truncate">◆ 拍賣行結算：0G 原生幣 (Galileo 測試鏈)</span>
-        <button
-          onClick={switchNetwork}
-          disabled={isSwitchingNetwork}
-          className="text-[10px] text-cyan-300 hover:text-cyan-200 underline whitespace-nowrap active:scale-95 disabled:opacity-60 flex items-center gap-1 transition-all cursor-pointer"
-          title="若 MetaMask 貨幣符號非 0G，點此可更新網路配置"
-        >
-          {isSwitchingNetwork ? (
-            <>
-              <Loader2 className="w-3 h-3 animate-spin text-cyan-300" />
-              <span>切換中...</span>
-            </>
-          ) : (
-            <span>切換/更新 0G 網路</span>
-          )}
-        </button>
-      </div>
-
       {/* Action Status Pill */}
       {actionStatus && (
         <div className="p-3 rounded-xl bg-purple-950/90 border border-purple-500 text-purple-200 text-xs font-mono flex items-center justify-between gap-2 shadow-[0_0_15px_rgba(168,85,247,0.3)] animate-pulse">
@@ -855,12 +835,6 @@ export const Marketplace: React.FC<MarketplaceProps> = ({
                         </span>
                       </div>
                     </div>
-
-                    {/* Trait In-Depth Explanation */}
-                    <div className="p-2.5 rounded-xl bg-space-950/90 border border-space-800 text-[11px] font-mono text-gray-300 leading-relaxed">
-                      <span className="text-cyan-400 font-bold">詞條解析：</span>
-                      <span>{stats.traitDescription}</span>
-                    </div>
                   </div>
                 );
               })()}
@@ -1006,19 +980,6 @@ export const Marketplace: React.FC<MarketplaceProps> = ({
                       );
                     })}
                   </div>
-
-                  {/* Secondary Quick Jump Select */}
-                  <select
-                    value={selectedTokenId || ""}
-                    onChange={(e) => setSelectedTokenId(Number(e.target.value))}
-                    className="w-full py-2 px-3 rounded-lg bg-space-950 border border-space-800 text-xs font-mono text-gray-200 focus:outline-none focus:border-neon-cyan cursor-pointer"
-                  >
-                    {userItems.map((item) => (
-                      <option key={item.tokenId} value={item.tokenId}>
-                        Token #{item.tokenId} · [{item.archetype?.rarity || "Common"}] {item.aiTitle}
-                      </option>
-                    ))}
-                  </select>
                 </div>
 
                 {/* 2. Selected Item Holographic Preview Card */}
@@ -1054,9 +1015,9 @@ export const Marketplace: React.FC<MarketplaceProps> = ({
                       <div className="space-y-1">
                         <label className="text-[10px] font-mono text-gray-400 font-semibold flex items-center gap-1">
                           <Sparkles className="w-3 h-3 text-cyan-400" />
-                          <span>0G AI 解算背景傳奇：</span>
+                          <span>0G AI 解算背景：</span>
                         </label>
-                        <div className="p-2.5 rounded-lg bg-space-900/80 border border-space-800 text-[11px] text-gray-300 leading-relaxed">
+                        <div className="p-2.5 rounded-lg bg-space-900/80 border border-space-800 text-[11px] text-gray-300 leading-relaxed line-clamp-2">
                           {selectedItem.aiLore || "深空考古隊尚未解讀完整的星際歷史記錄。"}
                         </div>
                       </div>
@@ -1113,12 +1074,6 @@ export const Marketplace: React.FC<MarketplaceProps> = ({
                             </span>
                           </div>
                         </div>
-
-                        {/* Trait explanation */}
-                        <div className="p-2 rounded-lg bg-space-900/60 border border-space-800/80 text-[10px] font-mono text-gray-300 leading-relaxed">
-                          <span className="text-cyan-400 font-bold">詞條解析：</span>
-                          <span>{stats.traitDescription}</span>
-                        </div>
                       </div>
 
                       {/* 0G Storage Hash */}
@@ -1132,11 +1087,9 @@ export const Marketplace: React.FC<MarketplaceProps> = ({
                       </div>
 
                       {/* Fleet Custody Alert Banner */}
-                      <div className="p-2.5 rounded-xl bg-amber-950/40 border border-amber-500/40 text-[10px] font-mono text-amber-200/90 leading-relaxed flex items-start gap-2">
-                        <ShieldAlert className="w-3.5 h-3.5 text-amber-400 shrink-0 mt-0.5" />
-                        <span>
-                          <strong>艦隊託管提示：</strong>藏品掛售於拍賣行期間將移轉至 0G 智能合約託管，暫時不計入放置採礦池。隨時<strong>下架撤回</strong>後，加成將立即全數恢復。
-                        </span>
+                      <div className="px-2.5 py-1.5 rounded-lg bg-amber-950/40 border border-amber-500/30 text-[10px] font-mono text-amber-300 flex items-center gap-1.5">
+                        <ShieldAlert className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+                        <span>⚠️ 掛售期間由合約託管，下架即恢復艦隊加成</span>
                       </div>
                     </div>
                   );

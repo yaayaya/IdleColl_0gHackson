@@ -191,66 +191,45 @@ export const ConnectWalletModal: React.FC<ConnectWalletModalProps> = ({
                 <div className="p-3 rounded-xl bg-cyan-950/40 border border-cyan-500/30 text-gray-300 text-xs font-mono leading-relaxed space-y-1">
                   <div className="flex items-center gap-1.5 text-cyan-300 font-bold">
                     <Radio className="w-3.5 h-3.5 animate-pulse" />
-                    <span>MetaMask 手機連線協定</span>
+                    <span>MetaMask 行動端連線</span>
                   </div>
                   <p className="text-[11px] text-gray-300">
-                    可直接喚醒手機端 MetaMask App 授權，或透過內建專用瀏覽器體驗最順暢的 Web3 操作。
+                    請使用 MetaMask 手機 App 內建瀏覽器開啟，享有最穩定的 0G 鏈上體驗。
                   </p>
                 </div>
 
-                {/* Primary Action: Direct SDK Wakeup */}
-                <button
-                  onClick={() => {
-                    onConnectMetaMask();
-                  }}
-                  disabled={isConnecting}
-                  className="w-full min-h-[44px] py-3 rounded-xl bg-gradient-to-r from-neon-cyan via-cyan-400 to-blue-500 hover:from-cyan-300 hover:to-blue-400 text-black font-mono font-bold text-xs shadow-[0_0_20px_rgba(0,240,255,0.45)] active:scale-95 disabled:opacity-75 disabled:cursor-not-allowed flex items-center justify-center gap-2 transition-all cursor-pointer touch-manipulation"
-                >
-                  {isConnecting ? (
-                    <>
-                      <Loader2 className="w-4 h-4 text-black animate-spin" />
-                      <span>正在喚醒 MetaMask App...</span>
-                    </>
-                  ) : (
-                    <>
-                      <Wallet className="w-4 h-4 text-black" />
-                      <span>🚀 喚醒手機 MetaMask App 連線</span>
-                    </>
-                  )}
-                </button>
-
-                {/* Secondary Action: Open in MetaMask App Browser */}
+                {/* Primary Action: Open in MetaMask App Browser */}
                 <button
                   onClick={handleOpenMetaMaskApp}
-                  className="w-full min-h-[44px] py-2.5 rounded-xl bg-space-850 hover:bg-space-800 border border-space-700 hover:border-cyan-500/40 text-cyan-300 font-mono text-xs font-semibold flex items-center justify-center gap-2 transition-all active:scale-95 cursor-pointer touch-manipulation"
+                  className="w-full min-h-[44px] py-3 rounded-xl bg-gradient-to-r from-neon-cyan via-cyan-400 to-blue-500 hover:from-cyan-300 hover:to-blue-400 text-black font-mono font-bold text-xs shadow-[0_0_20px_rgba(0,240,255,0.45)] active:scale-95 flex items-center justify-center gap-2 transition-all cursor-pointer touch-manipulation"
                 >
-                  <Globe className="w-3.5 h-3.5 text-cyan-400" />
-                  <span>在 MetaMask 內建瀏覽器中開啟</span>
+                  <Globe className="w-4 h-4 text-black" />
+                  <span>🚀 開啟 MetaMask App 遊玩</span>
                 </button>
 
-                {/* Tertiary Action: Copy Game Link */}
+                {/* Secondary Action: Copy Game Link */}
                 <button
                   onClick={handleCopy}
-                  className="w-full min-h-[44px] py-2 rounded-xl bg-space-950/60 hover:bg-space-850 border border-space-800 text-gray-400 hover:text-gray-200 font-mono text-[11px] flex items-center justify-center gap-1.5 transition-all active:scale-95 cursor-pointer touch-manipulation"
+                  className="w-full min-h-[40px] py-2 rounded-xl bg-space-850 hover:bg-space-800 border border-space-700 text-gray-300 font-mono text-xs flex items-center justify-center gap-1.5 transition-all active:scale-95 cursor-pointer touch-manipulation"
                 >
                   {copied ? (
                     <Check className="w-3.5 h-3.5 text-emerald-400" />
                   ) : (
-                    <Copy className="w-3.5 h-3.5 text-gray-500" />
+                    <Copy className="w-3.5 h-3.5 text-gray-400" />
                   )}
-                  <span>{copied ? "已複製遊戲專屬網址！" : "複製遊戲網址 (前往 MetaMask 開啟)"}</span>
+                  <span>{copied ? "已複製遊戲網址！" : "複製遊戲網址"}</span>
                 </button>
               </div>
             ) : (
               /* Case 3: Desktop Browser without injected provider */
               <div className="space-y-3">
-                <div className="p-3.5 rounded-xl bg-cyan-950/40 border border-cyan-500/30 text-gray-300 text-xs font-mono leading-relaxed space-y-1.5">
+                <div className="p-3.5 rounded-xl bg-cyan-950/40 border border-cyan-500/30 text-gray-300 text-xs font-mono leading-relaxed space-y-1">
                   <div className="flex items-center gap-1.5 text-cyan-300 font-bold">
                     <Monitor className="w-4 h-4 text-cyan-400" />
-                    <span>電腦端外掛登入 (Browser Extension)</span>
+                    <span>電腦端外掛登入</span>
                   </div>
                   <p className="text-[11px] text-gray-300 leading-normal">
-                    為確保 0G Galileo 區塊鏈合約互動安全與簽署順暢，電腦端請使用 <strong>MetaMask 等 Web3 瀏覽器擴充外掛</strong>。目前尚未偵測到外掛。
+                    尚未偵測到錢包外掛，電腦端請使用 Chrome / Brave / Edge 安裝 MetaMask 外掛。
                   </p>
                 </div>
 
@@ -262,15 +241,15 @@ export const ConnectWalletModal: React.FC<ConnectWalletModalProps> = ({
                   className="w-full min-h-[44px] py-3 rounded-xl bg-gradient-to-r from-neon-cyan via-cyan-400 to-blue-500 hover:from-cyan-300 hover:to-blue-400 text-black font-mono font-bold text-xs shadow-[0_0_20px_rgba(0,240,255,0.45)] active:scale-95 flex items-center justify-center gap-2 transition-all"
                 >
                   <ExternalLink className="w-4 h-4 text-black" />
-                  <span>前往安裝 MetaMask 瀏覽器外掛</span>
+                  <span>前往安裝 MetaMask 外掛</span>
                 </a>
 
                 {/* Action 2: Reload Page after installation */}
                 <button
                   onClick={() => window.location.reload()}
-                  className="w-full min-h-[44px] py-2.5 rounded-xl bg-space-850 hover:bg-space-800 border border-space-700 text-gray-300 hover:text-white font-mono text-xs flex items-center justify-center gap-1.5 transition-all active:scale-95 cursor-pointer touch-manipulation"
+                  className="w-full min-h-[40px] py-2 rounded-xl bg-space-850 hover:bg-space-800 border border-space-700 text-gray-300 hover:text-white font-mono text-xs flex items-center justify-center gap-1.5 transition-all active:scale-95 cursor-pointer touch-manipulation"
                 >
-                  <span>🔄 我已完成外掛安裝，點此重新整理頁面</span>
+                  <span>🔄 重新整理頁面</span>
                 </button>
               </div>
             )}

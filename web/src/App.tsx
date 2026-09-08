@@ -32,7 +32,8 @@ export function App() {
   const [playerName, setPlayerName] = useState<string>("Captain");
   const [coins, setCoins] = useState<number>(0);
   const [tickets, setTickets] = useState<number>(0);
-  const [initialPending, setInitialPending] = useState<number>(0);
+  const [livePending, setLivePending] = useState<number>(0);
+  const [lastClaimTimestamp, setLastClaimTimestamp] = useState<number | null>(null);
   const [miningRate, setMiningRate] = useState<number>(10);
   const [maxIdleCoins, setMaxIdleCoins] = useState<number>(1000);
   const [bonusMiningRate, setBonusMiningRate] = useState<number>(0);
@@ -71,7 +72,8 @@ export function App() {
       setPlayerName("Captain");
       setCoins(0);
       setTickets(0);
-      setInitialPending(0);
+      setLivePending(0);
+      setLastClaimTimestamp(null);
       setMiningRate(10);
       setMaxIdleCoins(1000);
       setBonusMiningRate(0);
@@ -87,7 +89,10 @@ export function App() {
         setPlayerName(data.player.name || `Captain_${address.slice(2, 6)}`);
         setCoins(data.player.coins);
         setTickets(data.player.tickets);
-        setInitialPending(data.pendingCoins);
+        setLivePending(data.pendingCoins || 0);
+        if (data.player.lastClaimAt) {
+          setLastClaimTimestamp(new Date(data.player.lastClaimAt).getTime());
+        }
         setMiningRate(data.miningRate || 10);
         setMaxIdleCoins(data.maxIdleCoins || 1000);
         setBonusMiningRate(data.bonusMiningRate || 0);
@@ -103,6 +108,40 @@ export function App() {
   useEffect(() => {
     fetchProfile();
   }, [fetchProfile]);
+
+  // Global Mining Reactor Ticker: Keeps mining continuously in background across all tabs
+  useEffect(() => {
+    if (!address) {
+      setLivePending(0);
+      return;
+    }
+
+    const timer = setInterval(() => {
+      setLivePending((prev) => Math.min(prev + miningRate, maxIdleCoins));
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, [address, miningRate, maxIdleCoins]);
+
+  // Physical timestamp synchronization: ensures exact match with server regardless of tab switches
+  const syncPendingWithTimestamp = useCallback(() => {
+    if (!address || !lastClaimTimestamp) return;
+    const now = Date.now();
+    const elapsedSeconds = Math.max(0, Math.floor((now - lastClaimTimestamp) / 1000));
+    const calculated = Math.min(Math.floor(elapsedSeconds * miningRate), maxIdleCoins);
+    setLivePending((prev) => Math.max(prev, calculated));
+  }, [address, lastClaimTimestamp, miningRate, maxIdleCoins]);
+
+  // Recalculate whenever tab regains visibility
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "visible") {
+        syncPendingWithTimestamp();
+      }
+    };
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+    return () => document.removeEventListener("visibilitychange", handleVisibilityChange);
+  }, [syncPendingWithTimestamp]);
 
   const handleRename = async (newName: string): Promise<boolean> => {
     if (!address) return false;
@@ -127,6 +166,9 @@ export function App() {
   const handleTabChange = (tab: TabType) => {
     if (typeof navigator !== "undefined" && navigator.vibrate) {
       navigator.vibrate([10]);
+    }
+    if (tab === "cockpit") {
+      syncPendingWithTimestamp();
     }
     setActiveTab(tab);
   };
@@ -165,7 +207,7 @@ export function App() {
                 playerName={playerName}
                 coins={coins}
                 tickets={tickets}
-                initialPending={initialPending}
+                livePending={livePending}
                 miningRate={miningRate}
                 maxIdleCoins={maxIdleCoins}
                 bonusMiningRate={bonusMiningRate}
@@ -175,6 +217,8 @@ export function App() {
                 isConnecting={isConnecting}
                 onClaimSuccess={(newCoins) => {
                   setCoins(newCoins);
+                  setLivePending(0);
+                  setLastClaimTimestamp(Date.now());
                   fetchProfile();
                 }}
                 onBuyTicketSuccess={(newCoins, newTickets) => {
@@ -183,7 +227,6 @@ export function App() {
                 }}
                 onConnectWallet={handleConnectClick}
                 onRename={handleRename}
-                onNavigateToScanner={() => handleTabChange("scanner")}
               />
             )}
 
