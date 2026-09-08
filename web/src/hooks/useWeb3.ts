@@ -76,13 +76,26 @@ export function useWeb3() {
   const [signer, setSigner] = useState<ethers.JsonRpcSigner | null>(null);
   const [isConnecting, setIsConnecting] = useState<boolean>(false);
 
-  const checkNetwork = useCallback(async (prov: ethers.BrowserProvider) => {
+  const checkNetwork = useCallback(async (prov?: ethers.BrowserProvider) => {
+    const eth = getEthereumProvider();
+    if (!eth) {
+      setIsCorrectNetwork(false);
+      return false;
+    }
     try {
-      const network = await prov.getNetwork();
-      const is0G = Number(network.chainId) === ZEROG_CHAIN_ID;
+      const chainIdHex = await eth.request({ method: "eth_chainId" });
+      const is0G = parseInt(chainIdHex, 16) === ZEROG_CHAIN_ID;
       setIsCorrectNetwork(is0G);
       return is0G;
     } catch {
+      if (prov) {
+        try {
+          const network = await prov.getNetwork();
+          const is0G = Number(network.chainId) === ZEROG_CHAIN_ID;
+          setIsCorrectNetwork(is0G);
+          return is0G;
+        } catch {}
+      }
       setIsCorrectNetwork(false);
       return false;
     }
@@ -108,8 +121,12 @@ export function useWeb3() {
         params: [{ chainId: ZEROG_CHAIN_ID_HEX }],
       });
       setIsCorrectNetwork(true);
-      if (address && provider) {
-        updateBalance(address, provider);
+      const bp = new ethers.BrowserProvider(eth);
+      setProvider(bp);
+      const s = await bp.getSigner();
+      setSigner(s);
+      if (address) {
+        updateBalance(address, bp);
       }
     } catch (switchError: any) {
       // 2. Fallback: If chain is not added yet (code 4902), request to add it
@@ -126,8 +143,12 @@ export function useWeb3() {
             params: [ZEROG_CONFIG],
           });
           setIsCorrectNetwork(true);
-          if (address && provider) {
-            updateBalance(address, provider);
+          const bp = new ethers.BrowserProvider(eth);
+          setProvider(bp);
+          const s = await bp.getSigner();
+          setSigner(s);
+          if (address) {
+            updateBalance(address, bp);
           }
         } catch (addError: any) {
           console.error("Failed to add 0G network:", addError);
@@ -136,7 +157,7 @@ export function useWeb3() {
         console.error("Failed to switch to 0G network:", switchError);
       }
     }
-  }, [address, provider, updateBalance]);
+  }, [address, updateBalance]);
 
   const connectWallet = useCallback(async () => {
     const eth = getEthereumProvider();
@@ -204,25 +225,48 @@ export function useWeb3() {
 
       if (!eth || !isMounted) return;
 
-      const handleAccountsChanged = (accounts: string[]) => {
+      const handleAccountsChanged = async (accounts: string[]) => {
         if (!isMounted) return;
         if (accounts.length > 0) {
           localStorage.removeItem("idlecoll_disconnected");
           const newAddr = accounts[0].toLowerCase();
           setAddress(newAddr);
-          const bp = new ethers.BrowserProvider(eth);
-          setProvider(bp);
-          bp.getSigner().then(setSigner);
-          updateBalance(newAddr, bp);
+          try {
+            const bp = new ethers.BrowserProvider(eth);
+            setProvider(bp);
+            const s = await bp.getSigner();
+            if (isMounted) setSigner(s);
+            await checkNetwork(bp);
+            updateBalance(newAddr, bp);
+          } catch (e) {
+            console.warn("[useWeb3] accountsChanged error:", e);
+          }
         } else {
           setAddress(null);
           setSigner(null);
+          setProvider(null);
+          setIsCorrectNetwork(false);
           setBalance0G("0.00");
         }
       };
 
-      const handleChainChanged = () => {
-        window.location.reload();
+      const handleChainChanged = async (chainIdHex: string) => {
+        if (!isMounted) return;
+        const chainIdNum = parseInt(chainIdHex, 16);
+        const is0G = chainIdNum === ZEROG_CHAIN_ID;
+        setIsCorrectNetwork(is0G);
+
+        try {
+          const bp = new ethers.BrowserProvider(eth);
+          setProvider(bp);
+          const s = await bp.getSigner();
+          if (isMounted) setSigner(s);
+          if (address && is0G) {
+            updateBalance(address, bp);
+          }
+        } catch (e) {
+          console.warn("[useWeb3] chainChanged signer error:", e);
+        }
       };
 
       eth.on("accountsChanged", handleAccountsChanged);
@@ -278,13 +322,34 @@ export function useWeb3() {
     }
   }, []);
 
-  // Contracts helpers with write signer - strictly enforces isCorrectNetwork
-  const getContracts = useCallback(() => {
-    if (!signer || !contractsData || !isCorrectNetwork) return null;
-    const nft = new ethers.Contract(contractsData.nftAddress, contractsData.nftAbi, signer);
-    const marketplace = new ethers.Contract(contractsData.marketplaceAddress, contractsData.marketplaceAbi, signer);
-    return { nft, marketplace, contractsData };
-  }, [signer, isCorrectNetwork]);
+  // Contracts helpers with write signer - dynamically validates signer and chain
+  const getContracts = useCallback(async () => {
+    const eth = getEthereumProvider();
+    if (!eth || !contractsData) return null;
+
+    try {
+      // Direct memory check of chainId
+      const chainIdHex = await eth.request({ method: "eth_chainId" });
+      const is0G = parseInt(chainIdHex, 16) === ZEROG_CHAIN_ID;
+      if (!is0G) {
+        setIsCorrectNetwork(false);
+        return null;
+      }
+      setIsCorrectNetwork(true);
+
+      const bp = new ethers.BrowserProvider(eth);
+      const s = await bp.getSigner();
+      setSigner(s);
+      setProvider(bp);
+
+      const nft = new ethers.Contract(contractsData.nftAddress, contractsData.nftAbi, s);
+      const marketplace = new ethers.Contract(contractsData.marketplaceAddress, contractsData.marketplaceAbi, s);
+      return { nft, marketplace, contractsData, signer: s, provider: bp };
+    } catch (e) {
+      console.error("Failed to get write contracts:", e);
+      return null;
+    }
+  }, []);
 
   const disconnectWallet = useCallback(() => {
     localStorage.setItem("idlecoll_disconnected", "true");
