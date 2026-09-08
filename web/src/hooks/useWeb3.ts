@@ -11,8 +11,9 @@ const ZEROG_CONFIG = {
   chainName: "0G Galileo Testnet",
   nativeCurrency: { name: "0G", symbol: "0G", decimals: 18 },
   rpcUrls: [
-    "https://evmrpc-testnet.0g.ai",
+    "https://0g-galileo-testnet.drpc.org",
     "https://16602.rpc.thirdweb.com",
+    "https://evmrpc-testnet.0g.ai",
   ],
   blockExplorerUrls: ["https://chainscan-galileo.0g.ai"],
 };
@@ -268,7 +269,7 @@ export function useWeb3() {
   const getReadOnlyContracts = useCallback(() => {
     if (!contractsData) return null;
     try {
-      const readOnlyProvider = new ethers.JsonRpcProvider("https://evmrpc-testnet.0g.ai");
+      const readOnlyProvider = new ethers.JsonRpcProvider("https://0g-galileo-testnet.drpc.org");
       const nft = new ethers.Contract(contractsData.nftAddress, contractsData.nftAbi, readOnlyProvider);
       const marketplace = new ethers.Contract(contractsData.marketplaceAddress, contractsData.marketplaceAbi, readOnlyProvider);
       return { nft, marketplace, contractsData };
