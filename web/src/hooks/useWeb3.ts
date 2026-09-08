@@ -1,9 +1,49 @@
 import { useState, useEffect, useCallback } from "react";
 import { ethers } from "ethers";
+import { MetaMaskSDK } from "@metamask/sdk";
 import contractsData from "../contracts/contracts.json";
 
 const ZEROG_CHAIN_ID = 16602;
 const ZEROG_CHAIN_ID_HEX = "0x40da";
+
+const ZEROG_CONFIG = {
+  chainId: ZEROG_CHAIN_ID_HEX,
+  chainName: "0G Galileo Testnet",
+  nativeCurrency: { name: "0G", symbol: "0G", decimals: 18 },
+  rpcUrls: ["https://evmrpc-testnet.0g.ai"],
+  blockExplorerUrls: ["https://chainscan-galileo.0g.ai"],
+};
+
+let mmsdkInstance: MetaMaskSDK | null = null;
+
+function getMMSDK(): MetaMaskSDK | null {
+  if (typeof window === "undefined") return null;
+  if (!mmsdkInstance) {
+    try {
+      mmsdkInstance = new MetaMaskSDK({
+        dappMetadata: {
+          name: "IdleColl 0G Space",
+          url: window.location.origin,
+        },
+        checkInstallationImmediately: false,
+      });
+    } catch (e) {
+      console.warn("MetaMaskSDK init warning:", e);
+    }
+  }
+  return mmsdkInstance;
+}
+
+export function getEthereumProvider(): any {
+  if (typeof window === "undefined") return null;
+  // 1. If window.ethereum is already present (e.g. desktop extension or in-app browser), use it
+  if ((window as any).ethereum) {
+    return (window as any).ethereum;
+  }
+  // 2. Otherwise get provider from MetaMask SDK
+  const sdk = getMMSDK();
+  return sdk?.getProvider() || null;
+}
 
 export function useWeb3() {
   const [address, setAddress] = useState<string | null>(null);
@@ -35,22 +75,14 @@ export function useWeb3() {
   }, []);
 
   const switchNetwork = useCallback(async () => {
-    if (typeof window === "undefined" || !(window as any).ethereum) return;
-    const eth = (window as any).ethereum;
-
-    const zeroGConfig = {
-      chainId: ZEROG_CHAIN_ID_HEX,
-      chainName: "0G Galileo Testnet",
-      nativeCurrency: { name: "0G", symbol: "0G", decimals: 18 },
-      rpcUrls: ["https://evmrpc-testnet.0g.ai"],
-      blockExplorerUrls: ["https://chainscan-galileo.0g.ai"],
-    };
+    const eth = getEthereumProvider();
+    if (!eth) return;
 
     try {
       // 1. Try wallet_addEthereumChain first to ensure native currency symbol is '0G'
       await eth.request({
         method: "wallet_addEthereumChain",
-        params: [zeroGConfig],
+        params: [ZEROG_CONFIG],
       });
       setIsCorrectNetwork(true);
       if (address && provider) {
@@ -74,7 +106,8 @@ export function useWeb3() {
   }, [address, provider, updateBalance]);
 
   const connectWallet = useCallback(async () => {
-    if (typeof window === "undefined" || !(window as any).ethereum) {
+    const eth = getEthereumProvider();
+    if (!eth) {
       const isMobile = typeof navigator !== "undefined" && /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
       if (isMobile) {
         const host = window.location.host;
@@ -87,9 +120,9 @@ export function useWeb3() {
     try {
       localStorage.removeItem("idlecoll_disconnected");
       setIsConnecting(true);
-      const browserProvider = new ethers.BrowserProvider((window as any).ethereum);
+      const browserProvider = new ethers.BrowserProvider(eth);
       const accounts = await browserProvider.send("eth_requestAccounts", []);
-      if (accounts.length > 0) {
+      if (accounts && accounts.length > 0) {
         const userAddr = accounts[0].toLowerCase();
         setAddress(userAddr);
         setProvider(browserProvider);
@@ -117,7 +150,7 @@ export function useWeb3() {
     let isMounted = true;
 
     const setupEthereum = async () => {
-      let eth = (window as any).ethereum;
+      let eth = getEthereumProvider();
 
       // In mobile MetaMask browser, ethereum is often injected asynchronously
       if (!eth) {
@@ -127,13 +160,13 @@ export function useWeb3() {
             "ethereum#initialized",
             () => {
               clearTimeout(timer);
-              eth = (window as any).ethereum;
+              eth = getEthereumProvider();
               resolve();
             },
             { once: true }
           );
         });
-        eth = (window as any).ethereum;
+        eth = getEthereumProvider();
       }
 
       if (!eth || !isMounted) return;
@@ -193,7 +226,7 @@ export function useWeb3() {
 
     return () => {
       isMounted = false;
-      const eth = (window as any).ethereum;
+      const eth = getEthereumProvider();
       if (eth && eth.removeListener) {
         eth.removeListener("accountsChanged", () => {});
         eth.removeListener("chainChanged", () => {});

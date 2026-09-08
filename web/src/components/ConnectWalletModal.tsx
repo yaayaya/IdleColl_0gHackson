@@ -99,35 +99,41 @@ export const ConnectWalletModal: React.FC<ConnectWalletModalProps> = ({
               </button>
             </div>
           ) : isMobile ? (
-            /* Case 2: Mobile Safari / Mobile Chrome without injected provider */
+            /* Case 2: Mobile Safari / Mobile Chrome with MetaMask SDK */
             <div className="space-y-3">
-              <div className="p-3 rounded-xl bg-amber-950/60 border border-amber-500/50 text-amber-200 text-[11px] font-mono leading-relaxed">
-                你目前正在手機的 <strong>Safari / Chrome</strong> 一般瀏覽器中。手機端需要使用 <strong>MetaMask App</strong> 才能進行 Web3 鏈上交易。
+              <div className="p-3 rounded-xl bg-cyan-950/60 border border-cyan-500/50 text-cyan-200 text-[11px] font-mono leading-relaxed">
+                已啟用 <strong>MetaMask SDK</strong>！您可直接點擊下方按鈕自動喚醒手機上的 MetaMask App 進行授權連線。
               </div>
 
-              {/* Action 1: Deep Link */}
+              {/* Action 1: Connect via MetaMask SDK */}
+              <button
+                onClick={() => {
+                  onConnectMetaMask();
+                  onClose();
+                }}
+                className="w-full py-3 rounded-xl bg-gradient-to-r from-neon-cyan via-cyan-400 to-blue-500 hover:from-cyan-300 hover:to-blue-400 text-black font-mono font-bold text-xs shadow-[0_0_16px_rgba(0,240,255,0.4)] active:scale-95 flex items-center justify-center gap-2 transition-all"
+              >
+                <Wallet className="w-4 h-4" />
+                <span>🚀 喚醒 MetaMask App 連線</span>
+              </button>
+
+              {/* Action 2: Direct Open in MetaMask In-App Browser */}
               <button
                 onClick={handleOpenMetaMaskApp}
-                className="w-full py-3 rounded-xl bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-400 hover:to-amber-400 text-black font-mono font-bold text-xs shadow-[0_0_16px_rgba(245,158,11,0.4)] active:scale-95 flex items-center justify-center gap-2 transition-all"
+                className="w-full py-2.5 rounded-xl bg-space-850 hover:bg-space-800 border border-space-700 text-amber-300 font-mono text-xs font-semibold flex items-center justify-center gap-2 transition-all active:scale-95"
               >
-                <Zap className="w-4 h-4" />
-                <span>🚀 一鍵在 MetaMask App 中開啟</span>
+                <Zap className="w-3.5 h-3.5 text-amber-400" />
+                <span>在 MetaMask 內建瀏覽器中開啟</span>
               </button>
 
-              {/* Action 2: Copy Link */}
+              {/* Action 3: Copy Link */}
               <button
                 onClick={handleCopy}
-                className="w-full py-2.5 rounded-xl bg-space-850 hover:bg-space-800 border border-space-700 text-gray-200 font-mono text-xs font-semibold flex items-center justify-center gap-2 transition-all active:scale-95"
+                className="w-full py-2 rounded-xl bg-space-900 hover:bg-space-850 border border-space-800 text-gray-400 hover:text-gray-200 font-mono text-[11px] flex items-center justify-center gap-1.5 transition-all active:scale-95"
               >
-                {copied ? <Check className="w-4 h-4 text-emerald-400" /> : <Copy className="w-4 h-4 text-gray-400" />}
-                <span>{copied ? "已複製！請在 MetaMask 貼上" : "📋 複製遊戲網址 (貼至錢包)"}</span>
+                {copied ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5 text-gray-500" />}
+                <span>{copied ? "已複製遊戲網址！" : "複製遊戲網址"}</span>
               </button>
-
-              {copied && (
-                <p className="text-[10px] text-emerald-400 font-mono text-center animate-pulse">
-                  打開 MetaMask App ➔ 點擊底部「瀏覽器 🌐」➔ 貼上網址即可遊玩！
-                </p>
-              )}
             </div>
           ) : (
             /* Case 3: Desktop Browser without MetaMask extension */
