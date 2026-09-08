@@ -13,6 +13,26 @@
   結合 <b>0G Compute (去中心化 AI 推理)</b>、<b>0G Storage (去中心化 Metadata 存證)</b> 與 <b>0G Galileo Testnet (智能合約確權與去中心化結算)</b> 的 Mobile-First Web3 星際放置收集與拍賣手遊。
 </p>
 
+<p align="center">
+  <a href="https://idlecoll.yayayayaya.xyz" target="_blank">
+    <img src="https://img.shields.io/badge/🎮_Live_Game-idlecoll.yayayayaya.xyz-00f0ff?style=for-the-badge&logoColor=black" alt="Live Game DApp" />
+  </a>
+  <a href="https://idlecoll.yayayayaya.xyz/presentation.html" target="_blank">
+    <img src="https://img.shields.io/badge/📊_Pitch_Deck-線上簡報展演-a855f7?style=for-the-badge" alt="Presentation Deck" />
+  </a>
+  <a href="https://chainscan-galileo.0g.ai" target="_blank">
+    <img src="https://img.shields.io/badge/0G_Galileo-Chain_ID_16602-f59e0b?style=for-the-badge" alt="0G Galileo Testnet" />
+  </a>
+</p>
+
+<p align="center">
+  <a href="https://idlecoll.yayayayaya.xyz" target="_blank">
+    <img src="web/public/qrcode.png" alt="Scan to Play IdleColl" width="160" /><br>
+    <b>📱 手機掃碼立即遊玩 (Scan QR Code to Play)</b><br>
+    <sub>🔗 <a href="https://idlecoll.yayayayaya.xyz">https://idlecoll.yayayayaya.xyz</a></sub>
+  </a>
+</p>
+
 ---
 
 ## 🎮 玩家遊玩前置指南 (Prerequisites & Guide)
@@ -196,10 +216,13 @@ npx hardhat run scripts/deploy.ts --network zeroG
 ## 🌐 線上遊玩與 PWA 安裝說明
 
 1. **線上體驗網址**：[https://idlecoll.yayayayaya.xyz](https://idlecoll.yayayayaya.xyz)
-2. **手機錢包瀏覽**：
+2. **黑客松線上簡報**：[https://idlecoll.yayayayaya.xyz/presentation.html](https://idlecoll.yayayayaya.xyz/presentation.html)
+3. **手機掃碼即刻體驗**：
+   <br><a href="https://idlecoll.yayayayaya.xyz"><img src="web/public/qrcode.png" alt="IdleColl QR Code" width="140" /></a>
+4. **手機錢包瀏覽方式**：
    - 開啟 **MetaMask App** ➔ 點擊底部「瀏覽器」圖示 ➔ 輸入網址即可直接遊玩。
    - 錢包將自動彈出 0G Galileo 測試網路的切換與新增引導。
-3. **PWA 全螢幕體驗**：
+5. **PWA 全螢幕體驗**：
    - 在 Safari 或 Chrome 點擊「分享」或「更多選單」➔ 點選「加入主畫面 (Add to Home Screen)」，即可享有零網址列的原生手遊體驗！
 
 ---
