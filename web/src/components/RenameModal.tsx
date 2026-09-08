@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { createPortal } from "react-dom";
-import { User, Check, X, Shield, Sparkles } from "lucide-react";
+import { User, Check, X, Shield, Sparkles, Loader2 } from "lucide-react";
 
 interface RenameModalProps {
   isOpen: boolean;
@@ -151,7 +151,10 @@ export const RenameModal: React.FC<RenameModalProps> = ({
               className="w-full min-h-[44px] py-2.5 px-4 rounded-xl bg-gradient-to-r from-neon-cyan via-cyan-400 to-blue-500 hover:from-cyan-300 hover:to-blue-400 text-black font-mono font-bold text-xs shadow-[0_0_15px_rgba(0,240,255,0.4)] active:scale-95 transition-all cursor-pointer touch-manipulation flex items-center justify-center gap-1.5 disabled:opacity-50"
             >
               {isSaving ? (
-                <span>儲存中...</span>
+                <>
+                  <Loader2 className="w-3.5 h-3.5 animate-spin text-black" />
+                  <span>儲存中...</span>
+                </>
               ) : (
                 <>
                   <Check className="w-3.5 h-3.5" />

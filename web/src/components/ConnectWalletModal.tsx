@@ -12,17 +12,20 @@ import {
   ShieldCheck,
   Globe,
   Radio,
+  Loader2,
 } from "lucide-react";
 import { getEthereumProvider, isMobileDevice } from "../hooks/useWeb3.ts";
 
 interface ConnectWalletModalProps {
   isOpen: boolean;
+  isConnecting?: boolean;
   onClose: () => void;
   onConnectMetaMask: () => void;
 }
 
 export const ConnectWalletModal: React.FC<ConnectWalletModalProps> = ({
   isOpen,
+  isConnecting = false,
   onClose,
   onConnectMetaMask,
 }) => {
@@ -165,12 +168,21 @@ export const ConnectWalletModal: React.FC<ConnectWalletModalProps> = ({
                 <button
                   onClick={() => {
                     onConnectMetaMask();
-                    onClose();
                   }}
-                  className="w-full min-h-[44px] py-3 rounded-xl bg-gradient-to-r from-neon-cyan via-cyan-400 to-blue-500 hover:from-cyan-300 hover:to-blue-400 text-black font-mono font-bold text-xs shadow-[0_0_20px_rgba(0,240,255,0.45)] active:scale-95 flex items-center justify-center gap-2 transition-all cursor-pointer touch-manipulation"
+                  disabled={isConnecting}
+                  className="w-full min-h-[44px] py-3 rounded-xl bg-gradient-to-r from-neon-cyan via-cyan-400 to-blue-500 hover:from-cyan-300 hover:to-blue-400 text-black font-mono font-bold text-xs shadow-[0_0_20px_rgba(0,240,255,0.45)] active:scale-95 disabled:opacity-75 disabled:cursor-not-allowed flex items-center justify-center gap-2 transition-all cursor-pointer touch-manipulation"
                 >
-                  <Wallet className="w-4 h-4 text-black" />
-                  <span>立即授權連線錢包</span>
+                  {isConnecting ? (
+                    <>
+                      <Loader2 className="w-4 h-4 text-black animate-spin" />
+                      <span>正在請求錢包授權連線...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Wallet className="w-4 h-4 text-black" />
+                      <span>立即授權連線錢包</span>
+                    </>
+                  )}
                 </button>
               </div>
             ) : isMobile ? (
@@ -190,12 +202,21 @@ export const ConnectWalletModal: React.FC<ConnectWalletModalProps> = ({
                 <button
                   onClick={() => {
                     onConnectMetaMask();
-                    onClose();
                   }}
-                  className="w-full min-h-[44px] py-3 rounded-xl bg-gradient-to-r from-neon-cyan via-cyan-400 to-blue-500 hover:from-cyan-300 hover:to-blue-400 text-black font-mono font-bold text-xs shadow-[0_0_20px_rgba(0,240,255,0.45)] active:scale-95 flex items-center justify-center gap-2 transition-all cursor-pointer touch-manipulation"
+                  disabled={isConnecting}
+                  className="w-full min-h-[44px] py-3 rounded-xl bg-gradient-to-r from-neon-cyan via-cyan-400 to-blue-500 hover:from-cyan-300 hover:to-blue-400 text-black font-mono font-bold text-xs shadow-[0_0_20px_rgba(0,240,255,0.45)] active:scale-95 disabled:opacity-75 disabled:cursor-not-allowed flex items-center justify-center gap-2 transition-all cursor-pointer touch-manipulation"
                 >
-                  <Wallet className="w-4 h-4 text-black" />
-                  <span>🚀 喚醒手機 MetaMask App 連線</span>
+                  {isConnecting ? (
+                    <>
+                      <Loader2 className="w-4 h-4 text-black animate-spin" />
+                      <span>正在喚醒 MetaMask App...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Wallet className="w-4 h-4 text-black" />
+                      <span>🚀 喚醒手機 MetaMask App 連線</span>
+                    </>
+                  )}
                 </button>
 
                 {/* Secondary Action: Open in MetaMask App Browser */}

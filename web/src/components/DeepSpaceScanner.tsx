@@ -11,6 +11,7 @@ import {
   Cpu,
   Database,
   Link as ChainIcon,
+  Loader2,
 } from "lucide-react";
 import { useDialog } from "../context/DialogContext.tsx";
 import { useScannerQueue } from "../context/ScannerQueueContext.tsx";
@@ -18,6 +19,7 @@ import { useScannerQueue } from "../context/ScannerQueueContext.tsx";
 interface DeepSpaceScannerProps {
   address: string | null;
   tickets: number;
+  isConnecting?: boolean;
   onDrawSuccess: (newTickets: number) => void;
   onViewCodex: () => void;
   onConnectWallet?: () => void;
@@ -26,6 +28,7 @@ interface DeepSpaceScannerProps {
 export const DeepSpaceScanner: React.FC<DeepSpaceScannerProps> = ({
   address,
   tickets,
+  isConnecting = false,
   onViewCodex,
   onConnectWallet,
 }) => {
@@ -135,8 +138,8 @@ export const DeepSpaceScanner: React.FC<DeepSpaceScannerProps> = ({
         <div className="w-full space-y-2 mt-2">
           <button
             onClick={handleStartScan}
-            disabled={isSubmitting || (Boolean(address) && (tickets < 1 || isQueueFull))}
-            className={`w-full py-3.5 rounded-xl font-mono font-bold text-xs uppercase tracking-wider transition-all flex items-center justify-center gap-2 active:scale-95 ${
+            disabled={isSubmitting || isConnecting || (Boolean(address) && (tickets < 1 || isQueueFull))}
+            className={`w-full py-3.5 rounded-xl font-mono font-bold text-xs uppercase tracking-wider transition-all flex items-center justify-center gap-2 active:scale-95 disabled:opacity-75 disabled:cursor-not-allowed ${
               !address
                 ? "bg-gradient-to-r from-neon-cyan via-cyan-400 to-blue-500 hover:from-cyan-300 hover:to-blue-400 text-black shadow-[0_0_20px_rgba(0,240,255,0.4)] cursor-pointer"
                 : isQueueFull
@@ -146,10 +149,16 @@ export const DeepSpaceScanner: React.FC<DeepSpaceScannerProps> = ({
                 : "bg-space-850 text-gray-500 border border-space-800 cursor-not-allowed"
             }`}
           >
-            <Sparkles className="w-4 h-4" />
+            {isSubmitting || isConnecting ? (
+              <Loader2 className="w-4 h-4 animate-spin text-black" />
+            ) : (
+              <Sparkles className="w-4 h-4" />
+            )}
             <span>
               {!address
-                ? "連線錢包以啟動探測"
+                ? isConnecting
+                  ? "錢包連線授權中..."
+                  : "連線錢包以啟動探測"
                 : isSubmitting
                 ? "調度排程中..."
                 : isQueueFull

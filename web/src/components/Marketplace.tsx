@@ -16,6 +16,7 @@ import {
   Filter,
   Check,
   ExternalLink,
+  Loader2,
 } from "lucide-react";
 import { useDialog } from "../context/DialogContext.tsx";
 
@@ -23,6 +24,7 @@ interface MarketplaceProps {
   address: string | null;
   balance0G?: string;
   isCorrectNetwork: boolean;
+  isSwitchingNetwork?: boolean;
   switchNetwork: () => Promise<void> | void;
   getContracts: () => Promise<any> | any;
   getReadOnlyContracts: () => any;
@@ -33,6 +35,7 @@ export const Marketplace: React.FC<MarketplaceProps> = ({
   address,
   balance0G = "0.00",
   isCorrectNetwork,
+  isSwitchingNetwork = false,
   switchNetwork,
   getContracts,
   getReadOnlyContracts,
@@ -46,6 +49,9 @@ export const Marketplace: React.FC<MarketplaceProps> = ({
   const [selectedTokenId, setSelectedTokenId] = useState<number | null>(null);
   const [priceInput, setPriceInput] = useState<string>("0.005");
   const [actionStatus, setActionStatus] = useState<string | null>(null);
+  const [isListing, setIsListing] = useState<boolean>(false);
+  const [processingBuyId, setProcessingBuyId] = useState<number | null>(null);
+  const [processingCancelId, setProcessingCancelId] = useState<number | null>(null);
 
   // Search, Filter & Inspection States
   const [searchQuery, setSearchQuery] = useState<string>("");
@@ -164,6 +170,7 @@ export const Marketplace: React.FC<MarketplaceProps> = ({
     }
 
     try {
+      setIsListing(true);
       let contracts = await getContracts();
       if (!contracts) {
         setActionStatus("正在請求錢包切換至 0G Galileo 測試網路...");
@@ -172,6 +179,7 @@ export const Marketplace: React.FC<MarketplaceProps> = ({
         if (!contracts) {
           showWarning("請在錢包中確認已切換至 0G Galileo 測試網路 (Chain ID: 16602)！", "網路未匹配");
           setActionStatus(null);
+          setIsListing(false);
           return;
         }
       }
@@ -234,6 +242,9 @@ export const Marketplace: React.FC<MarketplaceProps> = ({
       } else {
         showError(err.reason || err.message || "上架失敗，請確認 0G 錢包授權狀態！", "上架交易中斷");
       }
+    } finally {
+      setIsListing(false);
+      setActionStatus(null);
     }
   };
 
@@ -272,6 +283,7 @@ export const Marketplace: React.FC<MarketplaceProps> = ({
     }
 
     try {
+      setProcessingBuyId(listing.listingId);
       setActionStatus(`請在 MetaMask 彈窗中確認支付 ${listing.price} 0G...`);
       const priceWei = ethers.parseEther(listing.price);
 
@@ -325,6 +337,9 @@ export const Marketplace: React.FC<MarketplaceProps> = ({
       } else {
         showError(err.reason || err.message || "購買失敗，請確認 0G 測試幣餘額足夠！", "購買失敗");
       }
+    } finally {
+      setProcessingBuyId(null);
+      setActionStatus(null);
     }
   };
 
@@ -347,6 +362,7 @@ export const Marketplace: React.FC<MarketplaceProps> = ({
       cancelText: "保留賣單",
       onConfirm: async () => {
         try {
+          setProcessingCancelId(listingId);
           setActionStatus("請在 MetaMask 彈窗中確認下架操作...");
           const tx = await contracts.marketplace.cancelListing(listingId, {
             gasLimit: 200000,
@@ -368,6 +384,9 @@ export const Marketplace: React.FC<MarketplaceProps> = ({
           } else {
             showError(err.reason || err.message || "下架失敗，請確認 0G 錢包簽署！", "下架失敗");
           }
+        } finally {
+          setProcessingCancelId(null);
+          setActionStatus(null);
         }
       },
     });
@@ -441,9 +460,17 @@ export const Marketplace: React.FC<MarketplaceProps> = ({
           </div>
           <button
             onClick={switchNetwork}
-            className="w-full sm:w-auto px-4 py-2 rounded-lg bg-amber-400 hover:bg-amber-300 text-black font-bold font-mono text-xs whitespace-nowrap shadow-md active:scale-95 transition-all"
+            disabled={isSwitchingNetwork}
+            className="w-full sm:w-auto px-4 py-2 rounded-lg bg-amber-400 hover:bg-amber-300 text-black font-bold font-mono text-xs whitespace-nowrap shadow-md active:scale-95 disabled:opacity-75 disabled:cursor-not-allowed flex items-center justify-center gap-1.5 transition-all cursor-pointer"
           >
-            切換至 0G Galileo
+            {isSwitchingNetwork ? (
+              <>
+                <Loader2 className="w-3.5 h-3.5 animate-spin text-black" />
+                <span>切換網路中...</span>
+              </>
+            ) : (
+              <span>切換至 0G Galileo</span>
+            )}
           </button>
         </div>
       )}
@@ -475,10 +502,18 @@ export const Marketplace: React.FC<MarketplaceProps> = ({
         <span className="text-cyan-400 truncate">◆ 拍賣行結算：0G 原生幣 (Galileo 測試鏈)</span>
         <button
           onClick={switchNetwork}
-          className="text-[10px] text-cyan-300 hover:text-cyan-200 underline whitespace-nowrap active:scale-95 transition-all"
+          disabled={isSwitchingNetwork}
+          className="text-[10px] text-cyan-300 hover:text-cyan-200 underline whitespace-nowrap active:scale-95 disabled:opacity-60 flex items-center gap-1 transition-all cursor-pointer"
           title="若 MetaMask 貨幣符號非 0G，點此可更新網路配置"
         >
-          切換/更新 0G 網路
+          {isSwitchingNetwork ? (
+            <>
+              <Loader2 className="w-3 h-3 animate-spin text-cyan-300" />
+              <span>切換中...</span>
+            </>
+          ) : (
+            <span>切換/更新 0G 網路</span>
+          )}
         </button>
       </div>
 
@@ -662,16 +697,32 @@ export const Marketplace: React.FC<MarketplaceProps> = ({
                   {isSeller ? (
                     <button
                       onClick={() => handleCancel(item.listingId)}
-                      className="px-2.5 py-1 rounded bg-space-800 hover:bg-red-950/80 border border-space-700 hover:border-red-500 text-red-300 text-[10px] font-mono"
+                      disabled={processingCancelId === item.listingId}
+                      className="px-2.5 py-1 rounded bg-space-800 hover:bg-red-950/80 border border-space-700 hover:border-red-500 text-red-300 text-[10px] font-mono flex items-center gap-1 active:scale-95 disabled:opacity-60 disabled:cursor-not-allowed cursor-pointer"
                     >
-                      下架
+                      {processingCancelId === item.listingId ? (
+                        <>
+                          <Loader2 className="w-3 h-3 animate-spin text-red-300" />
+                          <span>下架中...</span>
+                        </>
+                      ) : (
+                        <span>下架</span>
+                      )}
                     </button>
                   ) : (
                     <button
                       onClick={() => handleBuy(item)}
-                      className="px-2.5 py-1 rounded bg-gradient-to-r from-neon-cyan to-blue-500 hover:from-cyan-400 hover:to-blue-400 text-black text-[10px] font-mono font-bold shadow-[0_0_8px_rgba(0,240,255,0.3)] active:scale-95"
+                      disabled={processingBuyId === item.listingId}
+                      className="px-2.5 py-1 rounded bg-gradient-to-r from-neon-cyan to-blue-500 hover:from-cyan-400 hover:to-blue-400 text-black text-[10px] font-mono font-bold shadow-[0_0_8px_rgba(0,240,255,0.3)] active:scale-95 disabled:opacity-60 disabled:cursor-not-allowed flex items-center gap-1 cursor-pointer"
                     >
-                      購買
+                      {processingBuyId === item.listingId ? (
+                        <>
+                          <Loader2 className="w-3 h-3 animate-spin text-black" />
+                          <span>購買中...</span>
+                        </>
+                      ) : (
+                        <span>購買</span>
+                      )}
                     </button>
                   )}
                 </div>
@@ -843,16 +894,32 @@ export const Marketplace: React.FC<MarketplaceProps> = ({
               {address && inspectItem.seller === address.toLowerCase() ? (
                 <button
                   onClick={() => handleCancel(inspectItem.listingId)}
-                  className="px-4 py-2 rounded-xl bg-red-950/80 hover:bg-red-900 border border-red-500/80 text-red-200 text-xs font-mono font-bold shadow-md active:scale-95"
+                  disabled={processingCancelId === inspectItem.listingId}
+                  className="px-4 py-2 rounded-xl bg-red-950/80 hover:bg-red-900 border border-red-500/80 text-red-200 text-xs font-mono font-bold shadow-md active:scale-95 disabled:opacity-60 disabled:cursor-not-allowed flex items-center gap-1.5 cursor-pointer"
                 >
-                  下架藏品
+                  {processingCancelId === inspectItem.listingId ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin text-red-200" />
+                      <span>{actionStatus || "下架撤回中..."}</span>
+                    </>
+                  ) : (
+                    <span>下架藏品</span>
+                  )}
                 </button>
               ) : (
                 <button
                   onClick={() => handleBuy(inspectItem)}
-                  className="flex-1 py-2.5 rounded-xl bg-gradient-to-r from-neon-cyan to-blue-500 hover:from-cyan-400 hover:to-blue-400 text-black text-xs font-mono font-bold shadow-[0_0_15px_rgba(0,240,255,0.4)] active:scale-95"
+                  disabled={processingBuyId === inspectItem.listingId}
+                  className="flex-1 py-2.5 rounded-xl bg-gradient-to-r from-neon-cyan to-blue-500 hover:from-cyan-400 hover:to-blue-400 text-black text-xs font-mono font-bold shadow-[0_0_15px_rgba(0,240,255,0.4)] active:scale-95 disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2 cursor-pointer"
                 >
-                  以 {inspectItem.price} 0G 立即購買
+                  {processingBuyId === inspectItem.listingId ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin text-black" />
+                      <span>{actionStatus || "0G 區塊確認中..."}</span>
+                    </>
+                  ) : (
+                    <span>以 {inspectItem.price} 0G 立即購買</span>
+                  )}
                 </button>
               )}
             </div>
@@ -1139,18 +1206,35 @@ export const Marketplace: React.FC<MarketplaceProps> = ({
                 {!isCorrectNetwork ? (
                   <button
                     onClick={switchNetwork}
-                    className="w-full py-3 rounded-xl bg-amber-500 hover:bg-amber-400 text-black font-mono font-bold text-xs shadow-[0_0_16px_rgba(245,158,11,0.4)] active:scale-95 flex items-center justify-center gap-2 transition-all cursor-pointer"
+                    disabled={isSwitchingNetwork}
+                    className="w-full py-3 rounded-xl bg-amber-500 hover:bg-amber-400 text-black font-mono font-bold text-xs shadow-[0_0_16px_rgba(245,158,11,0.4)] active:scale-95 disabled:opacity-75 disabled:cursor-not-allowed flex items-center justify-center gap-2 transition-all cursor-pointer"
                   >
-                    <ShieldAlert className="w-4 h-4" />
-                    <span>切換至 0G Galileo 測試網 (以 0G 幣交易)</span>
+                    {isSwitchingNetwork ? (
+                      <>
+                        <Loader2 className="w-4 h-4 animate-spin text-black" />
+                        <span>正在請求切換至 0G Galileo 測試網...</span>
+                      </>
+                    ) : (
+                      <>
+                        <ShieldAlert className="w-4 h-4" />
+                        <span>切換至 0G Galileo 測試網 (以 0G 幣交易)</span>
+                      </>
+                    )}
                   </button>
                 ) : (
                   <button
                     onClick={handleList}
-                    disabled={!selectedTokenId || !priceInput || parseFloat(priceInput) <= 0}
-                    className="w-full py-3 rounded-xl bg-gradient-to-r from-neon-cyan to-blue-500 hover:from-cyan-400 hover:to-blue-400 text-black font-mono font-bold text-xs shadow-[0_0_16px_rgba(0,240,255,0.4)] active:scale-95 disabled:opacity-50 transition-all cursor-pointer"
+                    disabled={isListing || !selectedTokenId || !priceInput || parseFloat(priceInput) <= 0}
+                    className="w-full py-3 rounded-xl bg-gradient-to-r from-neon-cyan to-blue-500 hover:from-cyan-400 hover:to-blue-400 text-black font-mono font-bold text-xs shadow-[0_0_16px_rgba(0,240,255,0.4)] active:scale-95 disabled:opacity-50 flex items-center justify-center gap-2 transition-all cursor-pointer"
                   >
-                    確認發布賣單 (簽署 0G 智能合約)
+                    {isListing ? (
+                      <>
+                        <Loader2 className="w-4 h-4 animate-spin text-black" />
+                        <span>{actionStatus || "0G 智能合約簽署中..."}</span>
+                      </>
+                    ) : (
+                      <span>確認發布賣單 (簽署 0G 智能合約)</span>
+                    )}
                   </button>
                 )}
               </div>

@@ -9,6 +9,7 @@ import {
   BatteryCharging,
   Zap,
   Radar,
+  Loader2,
 } from "lucide-react";
 import { useDialog } from "../context/DialogContext.tsx";
 
@@ -24,6 +25,7 @@ interface IdleCockpitProps {
   bonusCapacity?: number;
   fleetLuck?: number;
   activeBuffs?: { title: string; trait: string; bonusText: string }[];
+  isConnecting?: boolean;
   onClaimSuccess: (newCoins: number, claimed: number) => void;
   onBuyTicketSuccess: (newCoins: number, newTickets: number) => void;
   onConnectWallet: () => void;
@@ -43,6 +45,7 @@ export const IdleCockpit: React.FC<IdleCockpitProps> = ({
   bonusCapacity = 0,
   fleetLuck = 50,
   activeBuffs = [],
+  isConnecting = false,
   onClaimSuccess,
   onBuyTicketSuccess,
   onConnectWallet,
@@ -207,10 +210,20 @@ export const IdleCockpit: React.FC<IdleCockpitProps> = ({
           {/* Connect Button */}
           <button
             onClick={onConnectWallet}
-            className="w-full py-3.5 rounded-xl bg-gradient-to-r from-neon-cyan via-cyan-400 to-blue-500 hover:from-cyan-300 hover:to-blue-400 text-black font-mono font-bold text-sm shadow-[0_0_25px_rgba(0,240,255,0.4)] active:scale-95 flex items-center justify-center gap-2 transition-all cursor-pointer"
+            disabled={isConnecting}
+            className="w-full py-3.5 rounded-xl bg-gradient-to-r from-neon-cyan via-cyan-400 to-blue-500 hover:from-cyan-300 hover:to-blue-400 text-black font-mono font-bold text-sm shadow-[0_0_25px_rgba(0,240,255,0.4)] active:scale-95 disabled:opacity-75 disabled:cursor-not-allowed flex items-center justify-center gap-2 transition-all cursor-pointer"
           >
-            <Wallet className="w-4 h-4 text-black" />
-            <span>連線錢包 · 啟動採礦反應爐</span>
+            {isConnecting ? (
+              <>
+                <Loader2 className="w-4 h-4 text-black animate-spin" />
+                <span>連線授權中...</span>
+              </>
+            ) : (
+              <>
+                <Wallet className="w-4 h-4 text-black" />
+                <span>連線錢包 · 啟動採礦反應爐</span>
+              </>
+            )}
           </button>
         </div>
       ) : (
@@ -336,10 +349,14 @@ export const IdleCockpit: React.FC<IdleCockpitProps> = ({
                 : "bg-space-850 text-gray-500 border border-space-800 cursor-not-allowed"
             }`}
           >
-            <Sparkles className="w-4 h-4" />
+            {isClaiming ? (
+              <Loader2 className="w-4 h-4 animate-spin text-black" />
+            ) : (
+              <Sparkles className="w-4 h-4" />
+            )}
             <span>
               {isClaiming
-                ? "採集中..."
+                ? "收益同步中..."
                 : livePending > 0
                 ? isCapped
                   ? "儲能已滿！立即收取金幣"
@@ -368,19 +385,24 @@ export const IdleCockpit: React.FC<IdleCockpitProps> = ({
         <button
           onClick={() => handleBuyTicket(1)}
           disabled={!address || isBuying || coins < TICKET_PRICE}
-          className={`w-full py-3 rounded-xl font-mono text-xs font-bold transition-all active:scale-95 ${
+          className={`w-full py-3 rounded-xl font-mono text-xs font-bold transition-all active:scale-95 flex items-center justify-center gap-2 ${
             address && coins >= TICKET_PRICE
               ? "bg-purple-600 hover:bg-purple-500 text-white shadow-[0_0_15px_rgba(168,85,247,0.4)] cursor-pointer"
               : "bg-space-850 text-gray-500 border border-space-800 cursor-not-allowed"
           }`}
         >
-          {isBuying
-            ? "兌換中..."
-            : !address
-            ? "請先連線錢包以兌換物資"
-            : coins < TICKET_PRICE
-            ? `金幣不足 (需 ${TICKET_PRICE} 金幣)`
-            : `花費 ${TICKET_PRICE} 金幣購買 1 張探測券`}
+          {isBuying ? (
+            <>
+              <Loader2 className="w-3.5 h-3.5 animate-spin" />
+              <span>探測券兌換中...</span>
+            </>
+          ) : !address ? (
+            "請先連線錢包以兌換物資"
+          ) : coins < TICKET_PRICE ? (
+            `金幣不足 (需 ${TICKET_PRICE} 金幣)`
+          ) : (
+            `花費 ${TICKET_PRICE} 金幣購買 1 張探測券`
+          )}
         </button>
 
         {/* Jump Directly to Deep Space Scanner */}

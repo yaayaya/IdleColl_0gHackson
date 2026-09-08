@@ -75,6 +75,7 @@ export function useWeb3() {
   const [provider, setProvider] = useState<ethers.BrowserProvider | null>(null);
   const [signer, setSigner] = useState<ethers.JsonRpcSigner | null>(null);
   const [isConnecting, setIsConnecting] = useState<boolean>(false);
+  const [isSwitchingNetwork, setIsSwitchingNetwork] = useState<boolean>(false);
 
   const checkNetwork = useCallback(async (prov?: ethers.BrowserProvider) => {
     const eth = getEthereumProvider();
@@ -115,6 +116,7 @@ export function useWeb3() {
     if (!eth) return;
 
     try {
+      setIsSwitchingNetwork(true);
       // 1. Standard EIP-3326: Try switching to 0G chain first
       await eth.request({
         method: "wallet_switchEthereumChain",
@@ -156,6 +158,8 @@ export function useWeb3() {
       } else {
         console.error("Failed to switch to 0G network:", switchError);
       }
+    } finally {
+      setIsSwitchingNetwork(false);
     }
   }, [address, updateBalance]);
 
@@ -374,6 +378,7 @@ export function useWeb3() {
     provider,
     signer,
     isConnecting,
+    isSwitchingNetwork,
     connectWallet,
     disconnectWallet,
     switchNetwork,

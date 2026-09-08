@@ -18,6 +18,8 @@ export function App() {
     address,
     balance0G,
     isCorrectNetwork,
+    isConnecting,
+    isSwitchingNetwork,
     connectWallet,
     disconnectWallet,
     switchNetwork,
@@ -39,6 +41,12 @@ export function App() {
   const [activeBuffs, setActiveBuffs] = useState<any[]>([]);
   const [isRenameOpen, setIsRenameOpen] = useState<boolean>(false);
   const [isConnectModalOpen, setIsConnectModalOpen] = useState<boolean>(false);
+
+  useEffect(() => {
+    if (address && isConnectModalOpen) {
+      setIsConnectModalOpen(false);
+    }
+  }, [address, isConnectModalOpen]);
 
   const handleConnectClick = () => {
     const eth = getEthereumProvider();
@@ -131,6 +139,8 @@ export function App() {
             playerName={playerName}
             balance0G={balance0G}
             isCorrectNetwork={isCorrectNetwork}
+            isConnecting={isConnecting}
+            isSwitchingNetwork={isSwitchingNetwork}
             coins={coins}
             tickets={tickets}
             connectWallet={handleConnectClick}
@@ -154,6 +164,7 @@ export function App() {
                 bonusCapacity={bonusCapacity}
                 fleetLuck={fleetLuck}
                 activeBuffs={activeBuffs}
+                isConnecting={isConnecting}
                 onClaimSuccess={(newCoins) => {
                   setCoins(newCoins);
                   fetchProfile();
@@ -172,6 +183,7 @@ export function App() {
               <DeepSpaceScanner
                 address={address}
                 tickets={tickets}
+                isConnecting={isConnecting}
                 onDrawSuccess={(newTickets) => setTickets(newTickets)}
                 onViewCodex={() => handleTabChange("codex")}
                 onConnectWallet={handleConnectClick}
@@ -185,6 +197,7 @@ export function App() {
                 address={address}
                 balance0G={balance0G}
                 isCorrectNetwork={isCorrectNetwork}
+                isSwitchingNetwork={isSwitchingNetwork}
                 switchNetwork={switchNetwork}
                 getContracts={getContracts}
                 getReadOnlyContracts={getReadOnlyContracts}
@@ -243,6 +256,7 @@ export function App() {
           {/* Root Connect Wallet Modal */}
           <ConnectWalletModal
             isOpen={isConnectModalOpen}
+            isConnecting={isConnecting}
             onClose={() => setIsConnectModalOpen(false)}
             onConnectMetaMask={connectWallet}
           />

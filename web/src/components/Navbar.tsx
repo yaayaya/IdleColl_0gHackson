@@ -11,6 +11,7 @@ import {
   Check,
   Radar,
   Edit3,
+  Loader2,
 } from "lucide-react";
 import { useDialog } from "../context/DialogContext.tsx";
 import { useScannerQueue } from "../context/ScannerQueueContext.tsx";
@@ -20,6 +21,8 @@ interface NavbarProps {
   playerName?: string;
   balance0G: string;
   isCorrectNetwork: boolean;
+  isConnecting?: boolean;
+  isSwitchingNetwork?: boolean;
   coins: number;
   tickets: number;
   connectWallet: () => void;
@@ -33,6 +36,8 @@ export const Navbar: React.FC<NavbarProps> = ({
   playerName,
   balance0G,
   isCorrectNetwork,
+  isConnecting = false,
+  isSwitchingNetwork = false,
   coins,
   tickets,
   connectWallet,
@@ -101,10 +106,20 @@ export const Navbar: React.FC<NavbarProps> = ({
             ) : (
               <button
                 onClick={switchNetwork}
-                className="flex items-center gap-1 px-2.5 py-1 rounded-full bg-amber-950/80 border border-amber-500/60 text-amber-300 text-[11px] font-mono animate-pulse hover:bg-amber-900"
+                disabled={isSwitchingNetwork}
+                className="flex items-center gap-1 px-2.5 py-1 rounded-full bg-amber-950/80 border border-amber-500/60 text-amber-300 text-[11px] font-mono animate-pulse hover:bg-amber-900 disabled:opacity-75 disabled:cursor-not-allowed cursor-pointer"
               >
-                <AlertTriangle className="w-3.5 h-3.5" />
-                <span>切換 0G</span>
+                {isSwitchingNetwork ? (
+                  <>
+                    <Loader2 className="w-3.5 h-3.5 animate-spin text-amber-300" />
+                    <span>切換中...</span>
+                  </>
+                ) : (
+                  <>
+                    <AlertTriangle className="w-3.5 h-3.5" />
+                    <span>切換 0G</span>
+                  </>
+                )}
               </button>
             )
           )}
@@ -142,10 +157,20 @@ export const Navbar: React.FC<NavbarProps> = ({
           ) : (
             <button
               onClick={connectWallet}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-black font-semibold text-xs transition-all shadow-[0_0_12px_rgba(0,240,255,0.3)] active:scale-95 cursor-pointer"
+              disabled={isConnecting}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-black font-semibold text-xs transition-all shadow-[0_0_12px_rgba(0,240,255,0.3)] active:scale-95 disabled:opacity-75 disabled:cursor-not-allowed cursor-pointer"
             >
-              <Wallet className="w-3.5 h-3.5" />
-              <span>連線錢包</span>
+              {isConnecting ? (
+                <>
+                  <Loader2 className="w-3.5 h-3.5 animate-spin text-black" />
+                  <span>連線中...</span>
+                </>
+              ) : (
+                <>
+                  <Wallet className="w-3.5 h-3.5" />
+                  <span>連線錢包</span>
+                </>
+              )}
             </button>
           )}
         </div>
