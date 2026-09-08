@@ -42,6 +42,14 @@ export function App() {
   const [isRenameOpen, setIsRenameOpen] = useState<boolean>(false);
   const [isConnectModalOpen, setIsConnectModalOpen] = useState<boolean>(false);
 
+  // Check if accessing presentation routes directly
+  useEffect(() => {
+    const path = window.location.pathname.toLowerCase();
+    if (path === "/presentation" || path === "/slides" || path === "/deck") {
+      window.location.replace("/presentation.html");
+    }
+  }, []);
+
   useEffect(() => {
     if (address && isConnectModalOpen) {
       setIsConnectModalOpen(false);

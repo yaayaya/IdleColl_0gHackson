@@ -15,6 +15,35 @@
 
 ---
 
+## 🎮 玩家游玩前置指南 (Prerequisites & Guide)
+
+为了获得最流畅的星际冒险与拍卖行交易体验，请先确认以下前置准备：
+
+### 1. 建议游玩环境（二选一最佳）
+* **💻 电脑端 (PC / Mac) [最强烈推荐]**：
+  * 使用 Chrome / Brave / Edge 等主流浏览器，并安装 **[MetaMask 浏览器插件 (Extension)](https://metamask.io/)**。
+  * 点击游戏右上角“连接钱包”，插件将自动弹出并引导自动添加与切换至 **0G Galileo Testnet**。
+* **📱 手机端 (iOS / Android) [移动端最佳解]**：
+  * 请打开 **MetaMask 手机 App** ➔ 点击底部导航栏的 **“浏览器”图标** ➔ 在地址栏输入线上体验网址：`https://idlecoll.yayayayaya.xyz`。
+  * ⚠️ *注意：请尽量避免使用手机外部 Safari / Chrome 直接打开，通过 MetaMask 内置浏览器可享有“零跳转、签名弹窗即时浮现”的原生手游体验！*
+
+### 2. 领取 0G Galileo 官方测试币 (Faucet)
+* **深空抽卡与放置采矿**：完全**由服务器代付 Gas（玩家完全免费、零弹窗）**。
+* **拍卖行挂售与购买藏品**：拍卖行智能合约皆在 0G 链上以 **0G 原生代币** 进行买卖结算与合约授权。
+* **免费领币步骤**：
+  1. 前往 **[0G 官方水龙头 (Faucet)](https://faucet.0g.ai/)**。
+  2. 粘贴您的钱包地址并完成验证。
+  3. 点击领取，每日可免费获得 **0.1 0G** 测试代币（足够进行数十次拍卖行挂售、购买与授权操作！）。
+
+### 3. 0G Galileo 网络参数 (若钱包未自动切换可手动填入)
+* **网络名称**：`0G Galileo Testnet`
+* **RPC URL**：`https://0g-galileo-testnet.drpc.org` 或 `https://evmrpc-testnet.0g.ai`
+* **Chain ID**：`16602` (`0x40da`)
+* **货币符号**：`0G`
+* **区块浏览器**：`https://chainscan-galileo.0g.ai`
+
+---
+
 ## 🌟 游戏核心特色与重大突破
 
 IdleColl 彻底重构了传统链游“数值枯燥”与“NFT 仅为静态图片”的弊病，打造出一个全流程与 0G 技术深度耦合的去中心化星际冒险世界：

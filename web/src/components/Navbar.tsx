@@ -85,6 +85,15 @@ export const Navbar: React.FC<NavbarProps> = ({
             </h1>
             <p className="text-[10px] text-gray-400 font-mono tracking-tighter">0G DEEP SPACE</p>
           </div>
+          <a
+            href="/presentation.html"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="ml-1 flex items-center gap-1 px-2 py-0.5 rounded-md bg-cyan-950/60 hover:bg-cyan-900/80 border border-cyan-500/40 hover:border-cyan-400 text-cyan-300 text-[10px] font-mono transition-all"
+            title="開啟 0G 黑客松簡報 (Presentation Deck)"
+          >
+            <span>📊 簡報</span>
+          </a>
         </div>
 
         <div className="flex items-center gap-1.5">
