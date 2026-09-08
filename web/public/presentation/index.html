@@ -7,7 +7,7 @@
   <style>
     :root {
       --bg: #060913;
-      --card-bg: rgba(13, 20, 36, 0.82);
+      --card-bg: rgba(13, 20, 36, 0.85);
       --border: rgba(0, 240, 255, 0.25);
       --cyan: #00f0ff;
       --purple: #a855f7;
@@ -52,7 +52,7 @@
     .slide {
       position: absolute;
       inset: 0;
-      padding: 36px 64px 76px 64px;
+      padding: 30px 60px 72px 60px;
       display: flex;
       flex-direction: column;
       justify-content: center;
@@ -69,7 +69,7 @@
     }
 
     .title-box {
-      margin-bottom: 20px;
+      margin-bottom: 16px;
     }
 
     .badge-tag {
@@ -85,15 +85,15 @@
       color: var(--cyan);
       background: rgba(0, 240, 255, 0.12);
       border: 1px solid rgba(0, 240, 255, 0.35);
-      margin-bottom: 8px;
+      margin-bottom: 6px;
     }
 
     h1.slide-title {
-      font-size: 2.8rem;
+      font-size: 2.7rem;
       font-weight: 900;
       letter-spacing: -0.5px;
       color: #fff;
-      line-height: 1.2;
+      line-height: 1.15;
     }
 
     h1.slide-title span {
@@ -103,7 +103,7 @@
     }
 
     .slide-desc {
-      font-size: 1.15rem;
+      font-size: 1.12rem;
       color: var(--muted);
       margin-top: 4px;
     }
@@ -332,23 +332,25 @@
       line-height: 1.5;
     }
 
-    /* Real Playwright Captured Phones (Slide 5) */
+    /* Real Playwright Captured Phones (Slide 5) - UNCLIPPED */
     .real-phone-card {
       background: var(--card-bg);
-      border: 1px solid var(--border);
+      border: 1.5px solid var(--border);
       border-radius: 18px;
-      padding: 12px 10px;
+      padding: 10px 10px 12px 10px;
       display: flex;
       flex-direction: column;
       align-items: center;
       transition: all 0.25s ease;
       box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+      cursor: pointer;
+      position: relative;
     }
 
     .real-phone-card:hover {
-      transform: translateY(-6px);
+      transform: translateY(-5px);
       border-color: var(--cyan);
-      box-shadow: 0 15px 35px rgba(0, 240, 255, 0.25);
+      box-shadow: 0 14px 35px rgba(0, 240, 255, 0.3);
     }
 
     .phone-label {
@@ -369,26 +371,117 @@
       letter-spacing: 0.5px;
     }
 
+    /* The frame now preserves the FULL mobile screen without any cropping */
     .phone-frame {
       width: 100%;
-      border-radius: 12px;
+      height: 480px;
+      border-radius: 14px;
       overflow: hidden;
-      border: 1px solid rgba(255, 255, 255, 0.15);
-      background: #000;
-      box-shadow: inset 0 0 10px rgba(0,0,0,0.8);
+      border: 1.5px solid rgba(0, 240, 255, 0.4);
+      background: #060913;
+      box-shadow: inset 0 0 15px rgba(0, 0, 0, 0.8);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
     }
 
     .phone-frame img {
       width: 100%;
-      height: 440px;
-      object-fit: cover;
-      object-position: top center;
+      height: 100%;
+      object-fit: contain; /* Complete unclipped screenshot */
       display: block;
-      transition: transform 0.3s ease;
+      background: #080d1a;
+      transition: transform 0.25s ease;
     }
 
     .real-phone-card:hover .phone-frame img {
       transform: scale(1.02);
+    }
+
+    .zoom-hint {
+      margin-top: 6px;
+      font-size: 0.72rem;
+      color: var(--muted);
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    /* Zoom Lightbox Modal */
+    #zoom-modal {
+      position: fixed;
+      inset: 0;
+      background: rgba(4, 7, 16, 0.88);
+      backdrop-filter: blur(16px);
+      z-index: 1000;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+      padding: 24px;
+      cursor: zoom-out;
+    }
+
+    #zoom-modal.active {
+      display: flex;
+      animation: fadeIn 0.2s ease-out;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: scale(0.96); }
+      to { opacity: 1; transform: scale(1); }
+    }
+
+    #zoom-content {
+      max-height: 88vh;
+      border-radius: 20px;
+      border: 2px solid var(--cyan);
+      box-shadow: 0 0 40px rgba(0, 240, 255, 0.4);
+      overflow: hidden;
+      background: #000;
+      cursor: default;
+    }
+
+    #zoom-content img {
+      height: 88vh;
+      width: auto;
+      display: block;
+      object-fit: contain;
+    }
+
+    #zoom-title {
+      color: #fff;
+      font-size: 1.25rem;
+      font-weight: 800;
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    #zoom-close {
+      position: absolute;
+      top: 24px;
+      right: 32px;
+      color: #fff;
+      font-size: 2rem;
+      cursor: pointer;
+      background: rgba(255, 255, 255, 0.1);
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      transition: all 0.2s;
+    }
+
+    #zoom-close:hover {
+      background: rgba(239, 68, 68, 0.3);
+      border-color: #ef4444;
+      color: #ef4444;
     }
 
     /* 12 Items Showcase */
@@ -472,7 +565,7 @@
     /* Bottom Status Controls */
     #status-bar {
       position: absolute;
-      bottom: 16px;
+      bottom: 14px;
       left: 60px;
       right: 60px;
       display: flex;
@@ -586,7 +679,6 @@
       </div>
 
       <div class="grid-3">
-        <!-- 0G Serving -->
         <div class="v-card glow-cyan">
           <div class="card-icon">🤖</div>
           <div class="card-heading" style="color: var(--cyan);">0G Serving (AI)</div>
@@ -598,7 +690,6 @@
           </ul>
         </div>
 
-        <!-- 0G Storage -->
         <div class="v-card glow-purple">
           <div class="card-icon">📦</div>
           <div class="card-heading" style="color: var(--purple);">0G Storage</div>
@@ -610,7 +701,6 @@
           </ul>
         </div>
 
-        <!-- 0G Galileo Chain -->
         <div class="v-card glow-amber">
           <div class="card-icon">⛓️</div>
           <div class="card-heading" style="color: var(--amber);">0G Galileo Chain</div>
@@ -663,49 +753,53 @@
       </div>
     </div>
 
-    <!-- SLIDE 5: 實機遊玩畫面 (PLAYWRIGHT CAPTURED) -->
+    <!-- SLIDE 5: 實機遊玩畫面 (完整不裁切 ＆ 點擊放大) -->
     <div class="slide" id="s5">
       <div class="title-box">
         <div class="badge-tag">Playwright Live Captured UI</div>
         <h1 class="slide-title">實機畫面：<span>4 大直式手遊沉浸介面</span></h1>
-        <div class="slide-desc">Playwright 實機擷取，真實運行於 0G Galileo 測試網</div>
+        <div class="slide-desc">Playwright 實機擷取 · 完整全貌呈現（點擊任一手機畫面即可全螢幕放大檢視）</div>
       </div>
 
       <div class="grid-4" style="align-items: center;">
         <!-- Screen 1: 駕駛艙 -->
-        <div class="real-phone-card">
+        <div class="real-phone-card" onclick="zoomImage('/screen_cockpit.png', '🚀 採礦駕駛艙 — 產能即時反哺 ＋ 艦隊 Buff')">
           <div class="phone-label">🚀 採礦駕駛艙</div>
           <div class="phone-sub">產能即時反哺 ＋ 艦隊 Buff</div>
           <div class="phone-frame">
             <img src="/screen_cockpit.png" alt="採礦艙實機畫面">
           </div>
+          <div class="zoom-hint">🔍 點擊放大全貌</div>
         </div>
 
         <!-- Screen 2: 抽卡與翻卡 -->
-        <div class="real-phone-card">
+        <div class="real-phone-card" onclick="zoomImage('/screen_scanner.png', '📡 深空探測 ＆ 翻卡 — AI 詞條手動揭曉 ＋ 0G Hash')">
           <div class="phone-label">📡 深空探測 ＆ 翻卡</div>
           <div class="phone-sub">AI 詞條手動揭曉 ＋ 0G Hash</div>
           <div class="phone-frame">
             <img src="/screen_scanner.png" alt="深空抽卡實機畫面">
           </div>
+          <div class="zoom-hint">🔍 點擊放大全貌</div>
         </div>
 
         <!-- Screen 3: 圖鑑矩陣 -->
-        <div class="real-phone-card">
+        <div class="real-phone-card" onclick="zoomImage('/screen_codex.png', '📖 星際圖鑑矩陣 — 12 格點亮 ＋ 0g:// 永存存證')">
           <div class="phone-label">📖 星際圖鑑矩陣</div>
           <div class="phone-sub">12 格點亮 ＋ 0g:// 永存存證</div>
           <div class="phone-frame">
             <img src="/screen_codex.png" alt="星際圖鑑實機畫面">
           </div>
+          <div class="zoom-hint">🔍 點擊放大全貌</div>
         </div>
 
         <!-- Screen 4: 0G 拍賣行 -->
-        <div class="real-phone-card">
+        <div class="real-phone-card" onclick="zoomImage('/screen_market.png', '💎 0G 原生拍賣行 — 全息詞條透視鏡 ＋ 0G 原生結算')">
           <div class="phone-label">💎 0G 原生拍賣行</div>
           <div class="phone-sub">全息詞條透視鏡 ＋ 0G 原生結算</div>
           <div class="phone-frame">
             <img src="/screen_market.png" alt="拍賣行實機畫面">
           </div>
+          <div class="zoom-hint">🔍 點擊放大全貌</div>
         </div>
       </div>
     </div>
@@ -840,6 +934,15 @@
       </div>
     </div>
 
+    <!-- LIGHTBOX ZOOM MODAL -->
+    <div id="zoom-modal" onclick="closeZoom(event)">
+      <div id="zoom-close" onclick="closeZoom(event)">✕</div>
+      <div id="zoom-title"></div>
+      <div id="zoom-content" onclick="event.stopPropagation()">
+        <img id="zoom-img" src="" alt="Zoomed View">
+      </div>
+    </div>
+
     <!-- 底部控制與提示列 -->
     <div id="status-bar">
       <div class="dots-container" id="dots">
@@ -868,6 +971,9 @@
     const slides = document.querySelectorAll('.slide');
     const dots = document.querySelectorAll('.dot-item');
     const pageNum = document.getElementById('page-num');
+    const zoomModal = document.getElementById('zoom-modal');
+    const zoomImg = document.getElementById('zoom-img');
+    const zoomTitle = document.getElementById('zoom-title');
 
     function goSlide(n) {
       if (n < 1) n = 1;
@@ -898,7 +1004,23 @@
       }
     }
 
+    function zoomImage(src, title) {
+      zoomImg.src = src;
+      zoomTitle.innerText = title;
+      zoomModal.classList.add('active');
+    }
+
+    function closeZoom(e) {
+      if (e) e.stopPropagation();
+      zoomModal.classList.remove('active');
+    }
+
     window.addEventListener('keydown', (e) => {
+      if (zoomModal.classList.contains('active')) {
+        if (e.key === 'Escape') closeZoom();
+        return;
+      }
+
       if (e.key === 'ArrowRight' || e.key === ' ' || e.key === 'PageDown' || e.key === 'Enter') next();
       else if (e.key === 'ArrowLeft' || e.key === 'Backspace' || e.key === 'PageUp') prev();
       else if (e.key === 'f' || e.key === 'F') toggleFS();
@@ -906,7 +1028,8 @@
     });
 
     window.addEventListener('click', (e) => {
-      if (e.target.closest('#status-bar')) return;
+      if (zoomModal.classList.contains('active')) return;
+      if (e.target.closest('#status-bar') || e.target.closest('.real-phone-card') || e.target.closest('#zoom-modal')) return;
       if (e.clientX > window.innerWidth * 0.6) next();
       else if (e.clientX < window.innerWidth * 0.4) prev();
     });
